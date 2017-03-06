@@ -1,0 +1,2 @@
+a:4:{s:4:"hash";s:0:"";s:5:"mtime";i:1488840537;s:6:"expire";i:9999999999;s:4:"tags";s:19:"ea6_CONFIG,ea6_MAGE";}
+a:2:{s:11:"sales_setup";a:2:{s:4:"name";s:11:"sales_setup";s:7:"extends";s:10:"core_setup";}s:5:"sales";a:2:{s:4:"name";s:5:"sales";s:7:"extends";s:4:"core";}}

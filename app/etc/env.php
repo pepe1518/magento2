@@ -6,11 +6,11 @@ return array (
   ),
   'install' => 
   array (
-    'date' => 'Thu, 26 Nov 2015 21:17:05 +0000',
+    'date' => 'Mon, 06 Mar 2017 22:43:13 +0000',
   ),
   'crypt' => 
   array (
-    'key' => 'dffe7b01c1b2bbc934cce8a78880ba4d',
+    'key' => '189535e548c67219e694d185d90b8177',
   ),
   'session' => 
   array (
@@ -24,10 +24,9 @@ return array (
       'default' => 
       array (
         'host' => 'localhost',
-        'dbname' => 'magento_dos',
+        'dbname' => 'magento2',
         'username' => 'root',
         'password' => 'jose123',
-        'active' => '1',
       ),
     ),
   ),
