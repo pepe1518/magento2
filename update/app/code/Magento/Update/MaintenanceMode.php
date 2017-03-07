@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Update;
@@ -66,7 +66,7 @@ class MaintenanceMode
     {
         if ($isOn) {
             if (touch($this->flagFile)) {
-                $this->status->add("Magento maintenance mode is enabled.");
+                $this->status->add("Magento maintenance mode is enabled.", \Psr\Log\LogLevel::INFO);
             } else {
                 throw new \RuntimeException("Magento maintenance mode cannot be enabled.");
             }
@@ -74,10 +74,11 @@ class MaintenanceMode
             if (file_exists($this->ipFile)) {
                 /** Maintenance mode should not be unset from updater application if it was set manually by the admin */
                 $this->status->add(
-                    "Magento maintenance mode was not disabled. It can be disabled form the Magento Backend."
+                    "Magento maintenance mode was not disabled. It can be disabled from the Magento Backend.",
+                    \Psr\Log\LogLevel::INFO
                 );
             } else if (unlink($this->flagFile)) {
-                $this->status->add("Magento maintenance mode is disabled.");
+                $this->status->add("Magento maintenance mode is disabled.", \Psr\Log\LogLevel::INFO);
             } else {
                 throw new \RuntimeException("Magento maintenance mode cannot be disabled.");
             }

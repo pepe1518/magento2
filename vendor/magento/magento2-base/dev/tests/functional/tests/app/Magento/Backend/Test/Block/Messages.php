@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -64,6 +64,19 @@ class Messages extends Block
     public function waitSuccessMessage()
     {
         return $this->waitForElementVisible($this->successMessage, Locator::SELECTOR_CSS);
+    }
+
+    /**
+     * Wait for success message and refresh page.
+     *
+     * @return bool
+     */
+    public function waitSuccessMessageAndRefreshPage()
+    {
+        $this->waitSuccessMessage();
+        $this->browser->refresh();
+
+        return $this->waitForElementNotVisible($this->successMessage, Locator::SELECTOR_CSS);
     }
 
     /**

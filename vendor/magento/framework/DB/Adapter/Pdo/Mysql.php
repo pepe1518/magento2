@@ -2,7 +2,7 @@
 /**
  * Mysql PDO DB adapter
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -17,11 +17,13 @@ use Magento\Framework\DB\ExpressionConverter;
 use Magento\Framework\DB\LoggerInterface;
 use Magento\Framework\DB\Profiler;
 use Magento\Framework\DB\Select;
+use Magento\Framework\DB\SelectFactory;
 use Magento\Framework\DB\Statement\Parameter;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\StringUtils;
+use Magento\Framework\DB\Query\Generator as QueryGenerator;
 
 /**
  * @SuppressWarnings(PHPMD.ExcessivePublicCount)
@@ -179,26 +181,38 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
     protected $dateTime;
 
     /**
+     * @var SelectFactory
+     */
+    protected $selectFactory;
+
+    /**
      * @var LoggerInterface
      */
     protected $logger;
 
     /**
-     * @param \Magento\Framework\Stdlib\StringUtils|String $string
+     * @var QueryGenerator
+     */
+    private $queryGenerator;
+
+    /**
+     * @param StringUtils $string
      * @param DateTime $dateTime
      * @param LoggerInterface $logger
+     * @param SelectFactory $selectFactory
      * @param array $config
-     * @throws \InvalidArgumentException
      */
     public function __construct(
         StringUtils $string,
         DateTime $dateTime,
         LoggerInterface $logger,
+        SelectFactory $selectFactory,
         array $config = []
     ) {
         $this->string = $string;
         $this->dateTime = $dateTime;
         $this->logger = $logger;
+        $this->selectFactory = $selectFactory;
         try {
             parent::__construct($config);
         } catch (\Zend_Db_Adapter_Exception $e) {
@@ -304,6 +318,9 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
     /**
      * Creates a PDO object and connects to the database.
      *
+     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     * @SuppressWarnings(PHPMD.NPathComplexity)
+     *
      * @return void
      * @throws \Zend_Db_Adapter_Exception
      */
@@ -326,6 +343,10 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
             unset($this->_config['host']);
         } elseif (strpos($this->_config['host'], ':') !== false) {
             list($this->_config['host'], $this->_config['port']) = explode(':', $this->_config['host']);
+        }
+
+        if (!isset($this->_config['driver_options'][\PDO::MYSQL_ATTR_MULTI_STATEMENTS])) {
+            $this->_config['driver_options'][\PDO::MYSQL_ATTR_MULTI_STATEMENTS] = false;
         }
 
         $this->logger->startTimer();
@@ -676,6 +697,8 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
      *
      * @param string $sql
      * @return array
+     *
+     * @deprecated
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
@@ -1327,7 +1350,8 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
      */
     public function select()
     {
-        return new Select($this);
+//        return new Select($this);
+        return $this->selectFactory->create($this);
     }
 
     /**
@@ -2780,6 +2804,9 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
                 if (($key == 'seq') || ($key == 'sneq')) {
                     $key = $this->_transformStringSqlCondition($key, $value);
                 }
+                if (($key == 'in' || $key == 'nin') && is_string($value)) {
+                    $value = explode(',', $value);
+                }
                 $query = $this->_prepareQuotedSqlCondition($conditionKeyMap[$key], $value, $fieldName);
             } else {
                 $queries = [];
@@ -3317,55 +3344,30 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
      * @param int $stepCount
      * @return \Magento\Framework\DB\Select[]
      * @throws LocalizedException
+     * @deprecated
      */
     public function selectsByRange($rangeField, \Magento\Framework\DB\Select $select, $stepCount = 100)
     {
-        $fromSelect = $select->getPart(\Magento\Framework\DB\Select::FROM);
-        if (empty($fromSelect)) {
-            throw new LocalizedException(
-                new \Magento\Framework\Phrase('Select object must have correct "FROM" part')
-            );
-        }
-
-        $tableName = [];
-        $correlationName = '';
-        foreach ($fromSelect as $correlationName => $formPart) {
-            if ($formPart['joinType'] == \Magento\Framework\DB\Select::FROM) {
-                $tableName = $formPart['tableName'];
-                break;
-            }
-        }
-
-        $selectRange = $this->select()
-            ->from(
-                $tableName,
-                [
-                    new \Zend_Db_Expr('MIN(' . $this->quoteIdentifier($rangeField) . ') AS min'),
-                    new \Zend_Db_Expr('MAX(' . $this->quoteIdentifier($rangeField) . ') AS max'),
-                ]
-            );
-
-        $rangeResult = $this->fetchRow($selectRange);
-        $min = $rangeResult['min'];
-        $max = $rangeResult['max'];
-
+        $iterator = $this->getQueryGenerator()->generate($rangeField, $select, $stepCount);
         $queries = [];
-        while ($min <= $max) {
-            $partialSelect = clone $select;
-            $partialSelect->where(
-                $this->quoteIdentifier($correlationName) . '.'
-                . $this->quoteIdentifier($rangeField) . ' >= ?',
-                $min
-            )
-                ->where(
-                    $this->quoteIdentifier($correlationName) . '.'
-                    . $this->quoteIdentifier($rangeField) . ' < ?',
-                    $min + $stepCount
-                );
-            $queries[] = $partialSelect;
-            $min += $stepCount;
+        foreach ($iterator as $query) {
+            $queries[] = $query;
         }
         return $queries;
+    }
+
+    /**
+     * Get query generator
+     *
+     * @return QueryGenerator
+     * @deprecated
+     */
+    private function getQueryGenerator()
+    {
+        if ($this->queryGenerator === null) {
+            $this->queryGenerator = \Magento\Framework\App\ObjectManager::getInstance()->create(QueryGenerator::class);
+        }
+        return $this->queryGenerator;
     }
 
     /**
@@ -3778,5 +3780,22 @@ class Mysql extends \Zend_Db_Adapter_Pdo_Mysql implements AdapterInterface
             $tables[] = $row;
         }
         return $tables;
+    }
+
+    /**
+     * Returns auto increment field if exists
+     *
+     * @param string $tableName
+     * @param string|null $schemaName
+     * @return string|bool
+     */
+    public function getAutoIncrementField($tableName, $schemaName = null)
+    {
+        $indexName = $this->getPrimaryKeyName($tableName, $schemaName);
+        $indexes = $this->getIndexList($tableName);
+        if ($indexName && count($indexes[$indexName]['COLUMNS_LIST']) == 1) {
+            return current($indexes[$indexName]['COLUMNS_LIST']);
+        }
+        return false;
     }
 }

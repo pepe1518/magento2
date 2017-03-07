@@ -2,7 +2,7 @@
 /**
  * Customer resource setup model
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Customer\Setup;
@@ -126,6 +126,7 @@ class CustomerSetup extends EavSetup
     {
         $entities = [
             'customer' => [
+                'entity_type_id' => \Magento\Customer\Api\CustomerMetadataInterface::ATTRIBUTE_SET_ID_CUSTOMER,
                 'entity_model' => 'Magento\Customer\Model\ResourceModel\Customer',
                 'attribute_model' => 'Magento\Customer\Model\Attribute',
                 'table' => 'customer_entity',
@@ -229,7 +230,7 @@ class CustomerSetup extends EavSetup
                     ],
                     'dob' => [
                         'type' => 'static',
-                        'label' => 'Date Of Birth',
+                        'label' => 'Date of Birth',
                         'input' => 'date',
                         'frontend' => 'Magento\Eav\Model\Entity\Attribute\Frontend\Datetime',
                         'backend' => 'Magento\Eav\Model\Entity\Attribute\Backend\Datetime',
@@ -338,6 +339,7 @@ class CustomerSetup extends EavSetup
                 ],
             ],
             'customer_address' => [
+                'entity_type_id' => \Magento\Customer\Api\AddressMetadataInterface::ATTRIBUTE_SET_ID_ADDRESS,
                 'entity_model' => 'Magento\Customer\Model\ResourceModel\Address',
                 'attribute_model' => 'Magento\Customer\Model\Attribute',
                 'table' => 'customer_address_entity',

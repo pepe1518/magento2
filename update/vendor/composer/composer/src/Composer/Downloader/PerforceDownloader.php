@@ -21,6 +21,7 @@ use Composer\Util\Perforce;
  */
 class PerforceDownloader extends VcsDownloader
 {
+    /** @var Perforce */
     protected $perforce;
 
     /**
@@ -34,7 +35,7 @@ class PerforceDownloader extends VcsDownloader
         $this->io->writeError('    Cloning ' . $ref);
         $this->initPerforce($package, $path, $url);
         $this->perforce->setStream($ref);
-        $this->perforce->p4Login($this->io);
+        $this->perforce->p4Login();
         $this->perforce->writeP4ClientSpec();
         $this->perforce->connectClient();
         $this->perforce->syncCodeBase($label);
@@ -43,7 +44,7 @@ class PerforceDownloader extends VcsDownloader
 
     private function getLabelFromSourceReference($ref)
     {
-        $pos = strpos($ref,'@');
+        $pos = strpos($ref, '@');
         if (false !== $pos) {
             return substr($ref, $pos + 1);
         }
@@ -51,7 +52,7 @@ class PerforceDownloader extends VcsDownloader
         return null;
     }
 
-    public function initPerforce($package, $path, $url)
+    public function initPerforce(PackageInterface $package, $path, $url)
     {
         if (!empty($this->perforce)) {
             $this->perforce->initializePath($path);
@@ -103,5 +104,13 @@ class PerforceDownloader extends VcsDownloader
     public function setPerforce($perforce)
     {
         $this->perforce = $perforce;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function hasMetadataRepository($path)
+    {
+        return true;
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -101,7 +101,6 @@ class SetQuotePersistentDataObserverTest extends \PHPUnit_Framework_TestCase
         $this->customerSessionMock->expects($this->once())->method('isLoggedIn')->will($this->returnValue(false));
         $this->helperMock->expects($this->once())->method('isShoppingCartPersist')->will($this->returnValue(false));
         $this->quoteManagerMock->expects($this->once())->method('isPersistent')->will($this->returnValue(true));
-        $this->quoteMock->expects($this->once())->method('setIsActive')->with(false)->will($this->returnSelf());
         $this->quoteMock->expects($this->once())->method('setIsPersistent')->with(true);
         $this->model->execute($this->observerMock);
     }

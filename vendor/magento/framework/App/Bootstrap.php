@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -404,15 +404,18 @@ class Bootstrap
      */
     public function isDeveloperMode()
     {
-        if (isset($this->server[State::PARAM_MODE]) && $this->server[State::PARAM_MODE] == State::MODE_DEVELOPER) {
-            return true;
+        $mode = 'default';
+        if (isset($this->server[State::PARAM_MODE])) {
+            $mode = $this->server[State::PARAM_MODE];
+        } else {
+            $deploymentConfig = $this->getObjectManager()->get(DeploymentConfig::class);
+            $configMode = $deploymentConfig->get(State::PARAM_MODE);
+            if ($configMode) {
+                $mode = $configMode;
+            }
         }
-        /** @var \Magento\Framework\App\DeploymentConfig $deploymentConfig */
-        $deploymentConfig = $this->getObjectManager()->get('Magento\Framework\App\DeploymentConfig');
-        if ($deploymentConfig->get(State::PARAM_MODE) == State::MODE_DEVELOPER) {
-            return true;
-        }
-        return false;
+
+        return $mode == State::MODE_DEVELOPER;
     }
 
     /**

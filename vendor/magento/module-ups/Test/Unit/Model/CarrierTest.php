@@ -1,11 +1,14 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Ups\Test\Unit\Model;
 
 use Magento\Quote\Model\Quote\Address\RateRequest;
+use Magento\Ups\Model\Carrier;
+use Magento\Directory\Model\Country;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 class CarrierTest extends \PHPUnit_Framework_TestCase
 {
@@ -19,10 +22,12 @@ class CarrierTest extends \PHPUnit_Framework_TestCase
      * @var \Magento\Quote\Model\Quote\Address\RateResult\Error|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $error;
+
     /**
      * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
     protected $helper;
+
     /**
      * Model under test
      *
@@ -51,7 +56,7 @@ class CarrierTest extends \PHPUnit_Framework_TestCase
     protected $countryFactory;
 
     /**
-     * @var \Magento\Directory\Model\Country
+     * @var Country|MockObject
      */
     protected $country;
 
@@ -232,5 +237,118 @@ class CarrierTest extends \PHPUnit_Framework_TestCase
         $request->setPackageWeight(1);
 
         $this->assertSame($this->rate, $this->model->collectRates($request));
+    }
+
+    /**
+     * @param string $data
+     * @param array $maskFields
+     * @param string $expected
+     * @dataProvider logDataProvider
+     */
+    public function testFilterDebugData($data, array $maskFields, $expected)
+    {
+        $refClass = new \ReflectionClass(Carrier::class);
+        $property = $refClass->getProperty('_debugReplacePrivateDataKeys');
+        $property->setAccessible(true);
+        $property->setValue($this->model, $maskFields);
+
+        $refMethod = $refClass->getMethod('filterDebugData');
+        $refMethod->setAccessible(true);
+        $result = $refMethod->invoke($this->model, $data);
+        $expectedXml = new \SimpleXMLElement($expected);
+        $resultXml = new \SimpleXMLElement($result);
+        static::assertEquals($expectedXml->asXML(), $resultXml->asXML());
+    }
+
+    /**
+     * Get list of variations
+     */
+    public function logDataProvider()
+    {
+        return [
+            [
+                '<?xml version="1.0" encoding="UTF-8"?>
+                <RateRequest>
+                    <UserId>42121</UserId>
+                    <Password>TestPassword</Password>
+                    <Package ID="0">
+                        <Service>ALL</Service>
+                    </Package>
+                </RateRequest>',
+                ['UserId', 'Password'],
+                '<?xml version="1.0" encoding="UTF-8"?>
+                <RateRequest>
+                    <UserId>****</UserId>
+                    <Password>****</Password>
+                    <Package ID="0">
+                        <Service>ALL</Service>
+                    </Package>
+                </RateRequest>',
+            ],
+            [
+                '<?xml version="1.0" encoding="UTF-8"?>
+                <RateRequest>
+                    <Auth>
+                        <UserId>1231</UserId>
+                    </Auth>
+                    <Package ID="0">
+                        <Service>ALL</Service>
+                    </Package>
+                </RateRequest>',
+                ['UserId'],
+                '<?xml version="1.0" encoding="UTF-8"?>
+                <RateRequest>
+                    <Auth>
+                        <UserId>****</UserId>
+                    </Auth>
+                    <Package ID="0">
+                        <Service>ALL</Service>
+                    </Package>
+                </RateRequest>',
+            ]
+        ];
+    }
+
+    /**
+     * @covers \Magento\Ups\Model\Carrier::setRequest
+     * @param string $countryCode
+     * @param string $foundCountryCode
+     * @dataProvider countryDataProvider
+     */
+    public function testSetRequest($countryCode, $foundCountryCode)
+    {
+        /** @var RateRequest $request */
+        $request = $this->helper->getObject(RateRequest::class);
+        $request->setData([
+            'orig_country' => 'USA',
+            'orig_region_code' => 'CA',
+            'orig_post_code' => 90230,
+            'orig_city' => 'Culver City',
+            'dest_country_id' => $countryCode,
+        ]);
+
+        $this->country->expects(static::at(1))
+            ->method('load')
+            ->with($countryCode)
+            ->willReturnSelf();
+
+        $this->country->expects(static::any())
+            ->method('getData')
+            ->with('iso2_code')
+            ->willReturn($foundCountryCode);
+
+        $this->model->setRequest($request);
+    }
+
+    /**
+     * Get list of country variations
+     * @return array
+     */
+    public function countryDataProvider()
+    {
+        return [
+            ['countryCode' => 'PR', 'foundCountryCode' => null],
+            ['countryCode' => 'US', 'foundCountryCode' => 'US'],
+        ];
     }
 }

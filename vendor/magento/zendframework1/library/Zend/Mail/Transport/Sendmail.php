@@ -194,6 +194,18 @@ class Zend_Mail_Transport_Sendmail extends Zend_Mail_Transport_Abstract
             unset($headers['Subject']);
         }
 
+        // Sanitize the From header
+        if (isset($headers['From'])) {
+            $addressList = array_filter($headers['From'], function($key) {
+                return $key !== 'append';
+            }, ARRAY_FILTER_USE_KEY);
+            foreach ($addressList as $address) {
+                if (preg_match('/\\\"/', $address)) {
+                    throw new Zend_Mail_Transport_Exception('Potential code injection in From header');
+                }
+            }
+        }
+
         // Prepare headers
         parent::_prepareHeaders($headers);
 

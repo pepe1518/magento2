@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Usps\Block\Rma\Adminhtml\Rma\Edit\Tab\General\Shipping\Packaging;
@@ -69,7 +69,7 @@ class Plugin
         $girthEnabled = false;
         $sizeEnabled = false;
         if ($carrier && isset($size[0]['value'])) {
-            if ($size[0]['value'] == Carrier::SIZE_LARGE && in_array(
+            if (in_array(
                 key($subject->getContainers()),
                 [Carrier::CONTAINER_NONRECTANGULAR, Carrier::CONTAINER_VARIABLE]
             )

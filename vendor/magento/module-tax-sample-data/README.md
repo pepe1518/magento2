@@ -1,1 +1,0 @@
-Magento_TaxSampleData module consists of installation scripts.

@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Checkout\Controller\Cart;
@@ -15,6 +15,10 @@ class Delete extends \Magento\Checkout\Controller\Cart
      */
     public function execute()
     {
+        if (!$this->_formKeyValidator->validate($this->getRequest())) {
+            return $this->resultRedirectFactory->create()->setPath('*/*/');
+        }
+
         $id = (int)$this->getRequest()->getParam('id');
         if ($id) {
             try {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -9,6 +9,8 @@ namespace Magento\Translation\Model\Inline;
 /**
  * This class is responsible for parsing content and applying necessary html element
  * wrapping and client scripts for inline translation.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
 {
@@ -120,6 +122,35 @@ class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
     protected $_appCache;
 
     /**
+     * @var \Magento\Translation\Model\Inline\CacheManager
+     */
+    private $cacheManager;
+
+    /**
+     * @var array
+     */
+    private $cacheTypes = [
+        \Magento\Framework\App\Cache\Type\Block::TYPE_IDENTIFIER,
+        \Magento\Framework\App\Cache\Type\Layout::TYPE_IDENTIFIER,
+        \Magento\Framework\App\Cache\Type\Translate::TYPE_IDENTIFIER
+    ];
+
+    /**
+     * @return \Magento\Translation\Model\Inline\CacheManager
+     *
+     * @deprecated
+     */
+    private function getCacheManger()
+    {
+        if (!$this->cacheManager instanceof \Magento\Translation\Model\Inline\CacheManager) {
+            $this->cacheManager = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                'Magento\Translation\Model\Inline\CacheManager'
+            );
+        }
+        return $this->cacheManager;
+    }
+
+    /**
      * Initialize base inline translation model
      *
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
@@ -149,14 +180,17 @@ class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
      * Parse and save edited translation
      *
      * @param array $translateParams
-     * @return $this
+     * @return array
      */
     public function processAjaxPost(array $translateParams)
     {
         if (!$this->_translateInline->isAllowed()) {
-            return $this;
+            return ['inline' => 'not allowed'];
         }
-        $this->_appCache->invalidate(\Magento\Framework\App\Cache\Type\Translate::TYPE_IDENTIFIER);
+
+        foreach ($this->cacheTypes as $cacheType) {
+            $this->_appCache->invalidate($cacheType);
+        }
 
         $this->_validateTranslationParams($translateParams);
         $this->_filterTranslationParams($translateParams, ['custom']);
@@ -179,7 +213,8 @@ class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
             }
             $resource->saveTranslate($param['original'], $param['custom'], null, $storeId);
         }
-        return $this;
+
+        return $this->getCacheManger()->updateAndGetTranslations();
     }
 
     /**
@@ -413,12 +448,12 @@ class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
                     $tagHtml = str_replace($matches[0], '', $tagHtml);
                     $trAttr = ' ' . $this->_getHtmlAttribute(
                         self::DATA_TRANSLATE,
-                        '[' . htmlspecialchars($matches[1]) . ',' . join(',', $trArr) . ']'
+                        '[' . htmlspecialchars($matches[1]) . ',' . str_replace("\"", "'", join(',', $trArr)) . ']'
                     );
                 } else {
                     $trAttr = ' ' . $this->_getHtmlAttribute(
                         self::DATA_TRANSLATE,
-                        '[' . join(',', $trArr) . ']'
+                        '[' . str_replace("\"", "'", join(',', $trArr)) . ']'
                     );
                 }
                 $trAttr = $this->_addTranslateAttribute($trAttr);
@@ -580,12 +615,13 @@ class Parser implements \Magento\Framework\Translate\Inline\ParserInterface
         while (preg_match('#' . self::REGEXP_TOKEN . '#', $this->_content, $matches, PREG_OFFSET_CAPTURE, $next)) {
             $translateProperties = json_encode(
                 [
-                    'shown' => htmlspecialchars($matches[1][0]),
-                    'translated' => htmlspecialchars($matches[2][0]),
+                    'shown' => $matches[1][0],
+                    'translated' => $matches[2][0],
                     'original' => $matches[3][0],
                     'location' => 'Text',
-                    'scope' => htmlspecialchars($matches[4][0]),
-                ]
+                    'scope' => $matches[4][0],
+                ],
+                JSON_HEX_QUOT
             );
 
             $spanHtml = $this->_getDataTranslateSpan(

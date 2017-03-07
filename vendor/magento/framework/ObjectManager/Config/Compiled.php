@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\ObjectManager\Config;
@@ -129,9 +129,15 @@ class Compiled implements \Magento\Framework\ObjectManager\ConfigInterface
      */
     public function extend(array $configuration)
     {
-        $this->arguments = $configuration['arguments'];
-        $this->virtualTypes = $configuration['instanceTypes'];
-        $this->preferences = $configuration['preferences'];
+        $this->arguments = isset($configuration['arguments'])
+            ? array_replace($this->arguments, $configuration['arguments'])
+            : $this->arguments;
+        $this->virtualTypes = isset($configuration['instanceTypes'])
+            ? array_replace($this->virtualTypes, $configuration['instanceTypes'])
+            : $this->virtualTypes;
+        $this->preferences = isset($configuration['preferences'])
+            ? array_replace($this->preferences, $configuration['preferences'])
+            : $this->preferences;
     }
 
     /**

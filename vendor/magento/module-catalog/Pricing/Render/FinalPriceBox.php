@@ -1,15 +1,22 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 namespace Magento\Catalog\Pricing\Render;
 
 use Magento\Catalog\Pricing\Price;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager;
 use Magento\Framework\Pricing\Render;
 use Magento\Framework\Pricing\Render\PriceBox as BasePriceBox;
 use Magento\Msrp\Pricing\Price\MsrpPrice;
+use Magento\Catalog\Model\Product\Pricing\Renderer\SalableResolverInterface;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\Pricing\SaleableInterface;
+use Magento\Framework\Pricing\Price\PriceInterface;
+use Magento\Framework\Pricing\Render\RendererPool;
 
 /**
  * Class for final_price rendering
@@ -20,27 +27,48 @@ use Magento\Msrp\Pricing\Price\MsrpPrice;
 class FinalPriceBox extends BasePriceBox
 {
     /**
+     * @var SalableResolverInterface
+     */
+    private $salableResolver;
+
+    /** @var  Manager */
+    private $moduleManager;
+
+    /**
+     * @param Context $context
+     * @param SaleableInterface $saleableItem
+     * @param PriceInterface $price
+     * @param RendererPool $rendererPool
+     * @param array $data
+     * @param SalableResolverInterface $salableResolver
+     */
+    public function __construct(
+        Context $context,
+        SaleableInterface $saleableItem,
+        PriceInterface $price,
+        RendererPool $rendererPool,
+        array $data = [],
+        SalableResolverInterface $salableResolver = null
+    ) {
+        parent::__construct($context, $saleableItem, $price, $rendererPool, $data);
+        $this->salableResolver = $salableResolver ?: \Magento\Framework\App\ObjectManager::getInstance()
+            ->get(SalableResolverInterface::class);
+    }
+
+    /**
      * @return string
      */
     protected function _toHtml()
     {
-        if (!$this->getSaleableItem() || $this->getSaleableItem()->getCanShowPrice() === false) {
+        // Check catalog permissions
+        if ($this->getSaleableItem()->getCanShowPrice() === false) {
             return '';
         }
 
         $result = parent::_toHtml();
 
-        try {
-            /** @var MsrpPrice $msrpPriceType */
-            $msrpPriceType = $this->getSaleableItem()->getPriceInfo()->getPrice('msrp_price');
-        } catch (\InvalidArgumentException $e) {
-            $this->_logger->critical($e);
-            return $this->wrapResult($result);
-        }
-
         //Renders MSRP in case it is enabled
-        $product = $this->getSaleableItem();
-        if ($msrpPriceType->canApplyMsrp($product) && $msrpPriceType->isMinimalPriceLessMsrp($product)) {
+        if ($this->isMsrpPriceApplicable()) {
             /** @var BasePriceBox $msrpBlock */
             $msrpBlock = $this->rendererPool->createPriceRender(
                 MsrpPrice::PRICE_CODE,
@@ -54,6 +82,36 @@ class FinalPriceBox extends BasePriceBox
         }
 
         return $this->wrapResult($result);
+    }
+
+    /**
+     * Check is MSRP applicable for the current product.
+     *
+     * @return bool
+     */
+    private function isMsrpPriceApplicable()
+    {
+        $moduleManager = $this->getModuleManager();
+
+        if (!$moduleManager->isEnabled('Magento_Msrp') || !$moduleManager->isOutputEnabled('Magento_Msrp')) {
+            return false;
+        }
+
+        try {
+            /** @var MsrpPrice $msrpPriceType */
+            $msrpPriceType = $this->getSaleableItem()->getPriceInfo()->getPrice('msrp_price');
+        } catch (\InvalidArgumentException $e) {
+            $this->_logger->critical($e);
+            return false;
+        }
+
+        if ($msrpPriceType === null) {
+            return false;
+        }
+
+        $product = $this->getSaleableItem();
+        
+        return $msrpPriceType->canApplyMsrp($product) && $msrpPriceType->isMinimalPriceLessMsrp($product);
     }
 
     /**
@@ -117,5 +175,39 @@ class FinalPriceBox extends BasePriceBox
         return $this->getDisplayMinimalPrice()
         && $minimalPriceAValue
         && $minimalPriceAValue < $finalPriceValue;
+    }
+
+    /**
+     * Get Key for caching block content
+     *
+     * @return string
+     */
+    public function getCacheKey()
+    {
+         return parent::getCacheKey() . ($this->getData('list_category_page') ? '-list-category-page': '');
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return array
+     */
+    public function getCacheKeyInfo()
+    {
+        $cacheKeys = parent::getCacheKeyInfo();
+        $cacheKeys['display_minimal_price'] = $this->getDisplayMinimalPrice();
+        return $cacheKeys;
+    }
+
+    /**
+     * @deprecated
+     * @return Manager
+     */
+    private function getModuleManager()
+    {
+        if ($this->moduleManager === null) {
+            $this->moduleManager = ObjectManager::getInstance()->get(Manager::class);
+        }
+        return $this->moduleManager;
     }
 }

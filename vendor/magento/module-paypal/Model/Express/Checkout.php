@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Paypal\Model\Express;
@@ -655,7 +655,7 @@ class Checkout
             && !$quote->isVirtual();
         if ($portBillingFromShipping) {
             $billingAddress = clone $shippingAddress;
-            $billingAddress->unsAddressId()->unsAddressType();
+            $billingAddress->unsAddressId()->unsAddressType()->setCustomerAddressId(null);
             $data = $billingAddress->getData();
             $data['save_in_address_book'] = 0;
             $quote->getBillingAddress()->addData($data);
@@ -756,6 +756,12 @@ class Checkout
             if ($methodCode != $shippingAddress->getShippingMethod()) {
                 $this->ignoreAddressValidation();
                 $shippingAddress->setShippingMethod($methodCode)->setCollectShippingRates(true);
+                $cartExtension = $this->_quote->getExtensionAttributes();
+                if ($cartExtension && $cartExtension->getShippingAssignments()) {
+                    $cartExtension->getShippingAssignments()[0]
+                        ->getShipping()
+                        ->setMethod($methodCode);
+                }
                 $this->_quote->collectTotals();
                 $this->quoteRepository->save($this->_quote);
             }

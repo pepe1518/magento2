@@ -21,6 +21,7 @@ use Composer\Composer;
 use Composer\DependencyResolver\Operation\OperationInterface;
 use Composer\Repository\CompositeRepository;
 use Composer\Script;
+use Composer\Script\CommandEvent;
 use Composer\Script\PackageEvent;
 use Composer\Util\ProcessExecutor;
 
@@ -44,6 +45,7 @@ class EventDispatcher
     protected $loader;
     protected $process;
     protected $listeners;
+    private $eventStack;
 
     /**
      * Constructor.
@@ -57,6 +59,7 @@ class EventDispatcher
         $this->composer = $composer;
         $this->io = $io;
         $this->process = $process ?: new ProcessExecutor($io);
+        $this->eventStack = array();
     }
 
     /**
@@ -135,20 +138,38 @@ class EventDispatcher
      *
      * @param  Event             $event          The event object to pass to the event handlers/listeners.
      * @param  string            $additionalArgs
-     * @return int               return code of the executed script if any, for php scripts a false return
-     *                                          value is changed to 1, anything else to 0
      * @throws \RuntimeException
      * @throws \Exception
+     * @return int               return code of the executed script if any, for php scripts a false return
+     *                                          value is changed to 1, anything else to 0
      */
     protected function doDispatch(Event $event)
     {
+        // add the bin dir to the PATH to make local binaries of deps usable in scripts
+        $binDir = $this->composer->getConfig()->get('bin-dir');
+        if (is_dir($binDir)) {
+            $binDir = realpath($binDir);
+            if (isset($_SERVER['PATH']) && !preg_match('{(^|'.PATH_SEPARATOR.')'.preg_quote($binDir).'($|'.PATH_SEPARATOR.')}', $_SERVER['PATH'])) {
+                $_SERVER['PATH'] = $binDir.PATH_SEPARATOR.getenv('PATH');
+                putenv('PATH='.$_SERVER['PATH']);
+            }
+        }
+
         $listeners = $this->getListeners($event);
+
+        $this->pushEvent($event);
 
         $return = 0;
         foreach ($listeners as $callable) {
             if (!is_string($callable) && is_callable($callable)) {
                 $event = $this->checkListenerExpectedEvent($callable, $event);
                 $return = false === call_user_func($callable, $event) ? 1 : 0;
+            } elseif ($this->isComposerScript($callable)) {
+                $this->io->writeError(sprintf('> %s: %s', $event->getName(), $callable), true, IOInterface::VERBOSE);
+                $scriptName = substr($callable, 1);
+                $args = $event->getArguments();
+                $flags = $event->getFlags();
+                $return = $this->dispatch($scriptName, new Script\Event($scriptName, $event->getComposer(), $event->getIO(), $event->isDevMode(), $args, $flags));
             } elseif ($this->isPhpScript($callable)) {
                 $className = substr($callable, 0, strpos($callable, '::'));
                 $methodName = substr($callable, strpos($callable, '::') + 2);
@@ -170,8 +191,14 @@ class EventDispatcher
                     throw $e;
                 }
             } else {
-                $args = implode(' ', array_map(array('Composer\Util\ProcessExecutor','escape'), $event->getArguments()));
-                if (0 !== ($exitCode = $this->process->execute($callable . ($args === '' ? '' : ' '.$args)))) {
+                $args = implode(' ', array_map(array('Composer\Util\ProcessExecutor', 'escape'), $event->getArguments()));
+                $exec = $callable . ($args === '' ? '' : ' '.$args);
+                if ($this->io->isVerbose()) {
+                    $this->io->writeError(sprintf('> %s: %s', $event->getName(), $exec));
+                } else {
+                    $this->io->writeError(sprintf('> %s', $exec));
+                }
+                if (0 !== ($exitCode = $this->process->execute($exec))) {
                     $this->io->writeError(sprintf('<error>Script %s handling the %s event returned with an error</error>', $callable, $event->getName()));
 
                     throw new \RuntimeException('Error Output: '.$this->process->getErrorOutput(), $exitCode);
@@ -182,6 +209,8 @@ class EventDispatcher
                 break;
             }
         }
+
+        $this->popEvent();
 
         return $return;
     }
@@ -195,12 +224,18 @@ class EventDispatcher
     {
         $event = $this->checkListenerExpectedEvent(array($className, $methodName), $event);
 
+        if ($this->io->isVerbose()) {
+            $this->io->writeError(sprintf('> %s: %s::%s', $event->getName(), $className, $methodName));
+        } else {
+            $this->io->writeError(sprintf('> %s::%s', $className, $methodName));
+        }
+
         return $className::$methodName($event);
     }
 
     /**
-     * @param mixed $target
-     * @param Event $event
+     * @param  mixed              $target
+     * @param  Event              $event
      * @return Event|CommandEvent
      */
     protected function checkListenerExpectedEvent($target, Event $event)
@@ -247,9 +282,9 @@ class EventDispatcher
      *
      * @param string   $eventName The event name - typically a constant
      * @param Callable $listener  A callable expecting an event argument
-     * @param integer  $priority  A higher value represents a higher priority
+     * @param int      $priority  A higher value represents a higher priority
      */
-    protected function addListener($eventName, $listener, $priority = 0)
+    public function addListener($eventName, $listener, $priority = 0)
     {
         $this->listeners[$eventName][$priority][] = $listener;
     }
@@ -300,8 +335,8 @@ class EventDispatcher
     /**
      * Checks if an event has listeners registered
      *
-     * @param  Event   $event
-     * @return boolean
+     * @param  Event $event
+     * @return bool
      */
     public function hasEventListeners(Event $event)
     {
@@ -342,11 +377,49 @@ class EventDispatcher
     /**
      * Checks if string given references a class path and method
      *
-     * @param  string  $callable
-     * @return boolean
+     * @param  string $callable
+     * @return bool
      */
     protected function isPhpScript($callable)
     {
         return false === strpos($callable, ' ') && false !== strpos($callable, '::');
+    }
+
+    /**
+     * Checks if string given references a composer run-script
+     *
+     * @param  string $callable
+     * @return bool
+     */
+    protected function isComposerScript($callable)
+    {
+        return '@' === substr($callable, 0, 1);
+    }
+
+    /**
+     * Push an event to the stack of active event
+     *
+     * @param  Event             $event
+     * @throws \RuntimeException
+     * @return number
+     */
+    protected function pushEvent(Event $event)
+    {
+        $eventName = $event->getName();
+        if (in_array($eventName, $this->eventStack)) {
+            throw new \RuntimeException(sprintf("Circular call to script handler '%s' detected", $eventName));
+        }
+
+        return array_push($this->eventStack, $eventName);
+    }
+
+    /**
+     * Pops the active event from the stack
+     *
+     * @return mixed
+     */
+    protected function popEvent()
+    {
+        return array_pop($this->eventStack);
     }
 }

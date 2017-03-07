@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\Interception;
@@ -71,7 +71,7 @@ trait Interceptor
      */
     public function ___callParent($method, array $arguments)
     {
-        return call_user_func_array(['parent', $method], $arguments);
+        return parent::$method(...array_values($arguments));
     }
 
     /**
@@ -82,10 +82,12 @@ trait Interceptor
     public function __sleep()
     {
         if (method_exists(get_parent_class($this), '__sleep')) {
-            return array_diff(parent::__sleep(), ['pluginLocator', 'pluginList', 'chain', 'subjectType']);
+            $properties = parent::__sleep();
         } else {
-            return array_keys(get_class_vars(get_parent_class($this)));
+            $properties = array_keys(get_object_vars($this));
         }
+        $properties = array_diff($properties, ['pluginLocator', 'pluginList', 'chain', 'subjectType', 'pluginLocator']);
+        return $properties;
     }
 
     /**
@@ -116,13 +118,13 @@ trait Interceptor
         if (isset($pluginInfo[DefinitionInterface::LISTENER_BEFORE])) {
             // Call 'before' listeners
             foreach ($pluginInfo[DefinitionInterface::LISTENER_BEFORE] as $code) {
-                $beforeResult = call_user_func_array(
-                    [$this->pluginList->getPlugin($this->subjectType, $code), 'before'. $capMethod],
-                    array_merge([$this], $arguments)
-                );
+                $pluginInstance = $this->pluginList->getPlugin($this->subjectType, $code);
+                $pluginMethod = 'before' . $capMethod;
+                $beforeResult = $pluginInstance->$pluginMethod($this, ...array_values($arguments));
                 if ($beforeResult) {
                     $arguments = $beforeResult;
                 }
+                unset($pluginInstance, $pluginMethod);
             }
         }
         if (isset($pluginInfo[DefinitionInterface::LISTENER_AROUND])) {
@@ -135,13 +137,13 @@ trait Interceptor
             $next = function () use ($chain, $type, $method, $subject, $code) {
                 return $chain->invokeNext($type, $method, $subject, func_get_args(), $code);
             };
-            $result = call_user_func_array(
-                [$this->pluginList->getPlugin($this->subjectType, $code), 'around' . $capMethod],
-                array_merge([$this, $next], $arguments)
-            );
+            $pluginInstance = $this->pluginList->getPlugin($this->subjectType, $code);
+            $pluginMethod = 'around' . $capMethod;
+            $result = $pluginInstance->$pluginMethod($this, $next, ...array_values($arguments));
+            unset($pluginInstance, $pluginMethod);
         } else {
             // Call original method
-            $result = call_user_func_array(['parent', $method], $arguments);
+            $result = parent::$method(...array_values($arguments));
         }
         if (isset($pluginInfo[DefinitionInterface::LISTENER_AFTER])) {
             // Call 'after' listeners

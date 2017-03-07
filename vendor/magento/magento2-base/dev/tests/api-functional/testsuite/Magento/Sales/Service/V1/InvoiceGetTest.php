@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Sales\Service\V1;
@@ -47,6 +47,11 @@ class InvoiceGetTest extends WebapiAbstract
         foreach ($expectedInvoiceData as $field => $value) {
             $this->assertArrayHasKey($field, $result);
             $this->assertEquals($value, $result[$field]);
+        }
+
+        //check that nullable fields were marked as optional and were not sent
+        foreach ($result as $value) {
+            $this->assertNotNull($value);
         }
     }
 }

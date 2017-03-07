@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Sales\Test\Unit\Model\Order;
@@ -20,6 +20,7 @@ class PaymentTest extends \PHPUnit_Framework_TestCase
     const TRANSACTION_ID = 'ewr34fM49V0';
 
     private $mockContext;
+    
     /**
      * @var Payment
      */
@@ -858,7 +859,6 @@ class PaymentTest extends \PHPUnit_Framework_TestCase
         $this->mockInvoice($this->transactionId);
         $this->mockResultTrueMethods($this->transactionId, $baseGrandTotal, $message);
 
-
         $this->orderMock->expects($this->once())
             ->method('getStoreId')
             ->willReturn($storeId);
@@ -1339,7 +1339,6 @@ class PaymentTest extends \PHPUnit_Framework_TestCase
             ->willReturn($this->creditMemoMock);
         $this->creditMemoMock->expects($this->once())->method('setPaymentRefundDisallowed')->willReturnSelf();
         $this->creditMemoMock->expects($this->once())->method('setAutomaticallyCreated')->willReturnSelf();
-        $this->creditMemoMock->expects($this->once())->method('register')->willReturnSelf();
         $this->creditMemoMock->expects($this->once())->method('addComment')->willReturnSelf();
         $this->creditMemoMock->expects($this->once())->method('save')->willReturnSelf();
         $this->orderMock->expects($this->once())->method('getBaseCurrency')->willReturn($this->currencyMock);

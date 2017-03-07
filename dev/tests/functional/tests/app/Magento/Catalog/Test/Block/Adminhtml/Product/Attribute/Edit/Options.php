@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -20,14 +20,14 @@ class Options extends SimpleElement
      *
      * @var string
      */
-    protected $addOption = '#add_new_option_button';
+    protected $addOption = 'button[data-action="add_new_row"]';
 
     /**
      * Option form selector.
      *
      * @var string
      */
-    protected $option = '.ui-sortable tr';
+    protected $option = '[data-index="attribute_options_select"] tbody tr';
 
     /**
      * Set value.

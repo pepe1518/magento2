@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -28,17 +29,12 @@ class ConcatWithSpacesFixer extends AbstractFixer
         $tokens = Tokens::fromCode($content);
 
         for ($index = $tokens->count() - 1; $index >= 0; --$index) {
-            $token = $tokens[$index];
-
-            if ($token->equals('.')) {
-                if (!$tokens[$index + 1]->isWhitespace()) {
-                    $tokens->insertAt($index + 1, new Token(array(T_WHITESPACE, ' ')));
-                }
-
-                if (!$tokens[$index - 1]->isWhitespace()) {
-                    $tokens->insertAt($index, new Token(array(T_WHITESPACE, ' ')));
-                }
+            if (!$tokens[$index]->equals('.')) {
+                continue;
             }
+
+            $this->fixWhiteSpaceAroundConcatToken($tokens, $index, 1);
+            $this->fixWhiteSpaceAroundConcatToken($tokens, $index, -1);
         }
 
         return $tokens->generateCode();
@@ -59,5 +55,31 @@ class ConcatWithSpacesFixer extends AbstractFixer
     {
         // should be run after the ConcatWithoutSpacesFixer
         return -10;
+    }
+
+    /**
+     * @param Tokens $tokens
+     * @param int    $index  Index of concat token
+     * @param int    $offset 1 or -1
+     */
+    private function fixWhiteSpaceAroundConcatToken(Tokens $tokens, $index, $offset)
+    {
+        $offsetIndex = $index + $offset;
+
+        if (!$tokens[$offsetIndex]->isWhitespace()) {
+            $tokens->insertAt($index + (1 === $offset ?: 0), new Token(array(T_WHITESPACE, ' ')));
+
+            return;
+        }
+
+        if (false !== strpos($tokens[$offsetIndex]->getContent(), "\n")) {
+            return;
+        }
+
+        if ($tokens[$index + $offset * 2]->isComment()) {
+            return;
+        }
+
+        $tokens[$offsetIndex]->setContent(' ');
     }
 }

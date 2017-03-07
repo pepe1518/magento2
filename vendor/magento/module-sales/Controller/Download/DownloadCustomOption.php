@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Sales\Controller\Download;
@@ -78,11 +78,8 @@ class DownloadCustomOption extends \Magento\Framework\App\Action\Action
             /** @var $productOption \Magento\Catalog\Model\Product\Option */
             $productOption = $this->_objectManager->create('Magento\Catalog\Model\Product\Option')->load($optionId);
         }
-        if (!$productOption ||
-            !$productOption->getId() ||
-            $productOption->getProductId() != $option->getProductId() ||
-            $productOption->getType() != 'file'
-        ) {
+
+        if (!$productOption || !$productOption->getId() || $productOption->getType() != 'file') {
             return $resultForward->forward('noroute');
         }
 

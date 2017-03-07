@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -15,7 +16,7 @@ use Symfony\CS\AbstractFixer;
 use Symfony\CS\Tokenizer\Tokens;
 
 /**
- * @author Graham Campbell <graham@mineuk.com>
+ * @author Graham Campbell <graham@alt-three.com>
  */
 class SpacesBeforeSemicolonFixer extends AbstractFixer
 {
@@ -27,14 +28,17 @@ class SpacesBeforeSemicolonFixer extends AbstractFixer
         $tokens = Tokens::fromCode($content);
 
         foreach ($tokens as $index => $token) {
-            if (!$token->equals(';')) {
+            if (!$token->equals(';') || !$tokens[$index - 1]->isWhitespace(array('whitespaces' => " \t"))) {
                 continue;
             }
 
-            $previous = $tokens[$index - 1];
-
-            if ($previous->isWhitespace(array('whitespaces' => " \t")) && !$tokens[$index - 2]->isComment()) {
-                $previous->clear();
+            if ($tokens[$index - 2]->equals(';')) {
+                // do not remove all whitespace before the semicolon because it is also whitespace after another semicolon
+                if (!$tokens[$index - 1]->equals(' ')) {
+                    $tokens[$index - 1]->setContent(' ');
+                }
+            } elseif (!$tokens[$index - 2]->isComment()) {
+                $tokens[$index - 1]->clear();
             }
         }
 

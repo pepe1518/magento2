@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -64,6 +64,7 @@ $orderStoreDate = $block->formatDate(
                     <th><?php /* @escapeNotVerified */ echo __('Order Status') ?></th>
                     <td><span id="order_status"><?php /* @escapeNotVerified */ echo $_order->getStatusLabel() ?></span></td>
                 </tr>
+                <?php echo $block->getChildHtml(); ?>
                 <?php if ($block->isSingleStoreMode() == false):?>
                     <tr>
                         <th><?php /* @escapeNotVerified */ echo __('Purchased From') ?></th>

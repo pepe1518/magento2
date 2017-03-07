@@ -1,10 +1,12 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\ConfigurableProduct\Block\Adminhtml\Product\Edit\Tab\Variations\Config;
 
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
 /**
  * @magentoAppArea adminhtml
@@ -20,13 +22,13 @@ class MatrixTest extends \Magento\TestFramework\TestCase\AbstractBackendControll
      */
     public function testGetVariations()
     {
+        $productRepository = Bootstrap::getObjectManager()->create(ProductRepositoryInterface::class);
+        $product = $productRepository->get('configurable');
         $this->_objectManager->get(
             'Magento\Framework\Registry'
         )->register(
             'current_product',
-            \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create(
-                'Magento\Catalog\Model\Product'
-            )->load(1)
+            $product
         );
         \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->get(
             'Magento\Framework\View\LayoutInterface'

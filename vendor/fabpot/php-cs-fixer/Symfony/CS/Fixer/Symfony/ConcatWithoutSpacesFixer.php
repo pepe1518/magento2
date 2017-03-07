@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -29,11 +30,13 @@ class ConcatWithoutSpacesFixer extends AbstractFixer
 
         foreach ($tokens as $index => $token) {
             if ($token->equals('.')) {
-                if (!$tokens[$tokens->getPrevNonWhitespace($index)]->isGivenKind(T_LNUMBER)) {
+                $previousNonWhiteIndex = $tokens->getPrevNonWhitespace($index);
+                if (!$tokens[$previousNonWhiteIndex]->isGivenKind(T_LNUMBER) && false === strpos($tokens[$previousNonWhiteIndex]->getContent(), "\n")) {
                     $tokens->removeLeadingWhitespace($index, $whitespaces);
                 }
 
-                if (!$tokens[$tokens->getNextNonWhitespace($index)]->isGivenKind(T_LNUMBER)) {
+                $nextNonWhiteIndex = $tokens->getNextNonWhitespace($index);
+                if (!$tokens[$nextNonWhiteIndex]->isGivenKind(array(T_LNUMBER, T_COMMENT, T_DOC_COMMENT))) {
                     $tokens->removeTrailingWhitespace($index, $whitespaces);
                 }
             }

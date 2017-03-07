@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -35,13 +35,6 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
     protected $dateTime;
 
     /**
-     * Users table
-     *
-     * @var string
-     */
-    protected $_usersTable;
-
-    /**
      * Construct
      *
      * @param \Magento\Framework\Model\ResourceModel\Db\Context $context
@@ -61,7 +54,6 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $this->_aclCache = $aclCache;
         $this->_roleFactory = $roleFactory;
         $this->dateTime = $dateTime;
-        $this->_usersTable = $this->getTable('admin_user');
     }
 
     /**
@@ -149,9 +141,12 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             $select = $connection->select();
             $select->from($this->getTable('authorization_role'))
                 ->where('parent_id > :parent_id')
-                ->where('user_id = :user_id');
+                ->where('user_id = :user_id')
+                ->where('user_type = :user_type');
 
-            $binds = ['parent_id' => 0, 'user_id' => $userId];
+            $binds = ['parent_id' => 0, 'user_id' => $userId,
+                      'user_type' => UserContextInterface::USER_TYPE_ADMIN
+            ];
 
             return $connection->fetchAll($select, $binds);
         } else {
@@ -183,7 +178,7 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
      */
     public function _clearUserRoles(ModelUser $user)
     {
-        $conditions = ['user_id = ?' => (int)$user->getId()];
+        $conditions = ['user_id = ?' => (int)$user->getId(), 'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN];
         $this->getConnection()->delete($this->getTable('authorization_role'), $conditions);
     }
 
@@ -252,13 +247,13 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $uid = $user->getId();
         $connection->beginTransaction();
         try {
-            $conditions = ['user_id = ?' => $uid];
-
-            $connection->delete($this->getMainTable(), $conditions);
-            $connection->delete($this->getTable('authorization_role'), $conditions);
+            $connection->delete($this->getMainTable(), ['user_id = ?' => $uid]);
+            $connection->delete(
+                $this->getTable('authorization_role'),
+                ['user_id = ?' => $uid, 'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN]
+            );
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             throw $e;
-            return false;
         } catch (\Exception $e) {
             $connection->rollBack();
             return false;
@@ -292,9 +287,13 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
             ['role_id']
         )->where(
             "{$table}.user_id = :user_id"
+        )->where(
+            "{$table}.user_type = :user_type"
         );
 
-        $binds = ['user_id' => (int)$user->getId()];
+        $binds = ['user_id' => (int)$user->getId(),
+                  'user_type' => UserContextInterface::USER_TYPE_ADMIN
+        ];
 
         $roles = $connection->fetchCol($select, $binds);
 
@@ -322,7 +321,11 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 
         $dbh = $this->getConnection();
 
-        $condition = ['user_id = ?' => (int)$user->getId(), 'parent_id = ?' => (int)$user->getRoleId()];
+        $condition = [
+            'user_id = ?' => (int)$user->getId(),
+            'parent_id = ?' => (int)$user->getRoleId(),
+            'user_type = ?' => UserContextInterface::USER_TYPE_ADMIN
+        ];
 
         $dbh->delete($this->getTable('authorization_role'), $condition);
         return $this;
@@ -341,9 +344,16 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
 
             $dbh = $this->getConnection();
 
-            $binds = ['parent_id' => $user->getRoleId(), 'user_id' => $user->getUserId()];
+            $binds = [
+                'parent_id' => $user->getRoleId(),
+                'user_id' => $user->getUserId(),
+                'user_type' => UserContextInterface::USER_TYPE_ADMIN
+            ];
 
-            $select = $dbh->select()->from($roleTable)->where('parent_id = :parent_id')->where('user_id = :user_id');
+            $select = $dbh->select()->from($roleTable)
+                ->where('parent_id = :parent_id')
+                ->where('user_type = :user_type')
+                ->where('user_id = :user_id');
 
             return $dbh->fetchCol($select, $binds);
         } else {
@@ -455,7 +465,7 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         if (sizeof($users) > 0) {
             $bind = ['reload_acl_flag' => 1];
             $where = ['user_id IN(?)' => $users];
-            $rowsCount = $connection->update($this->_usersTable, $bind, $where);
+            $rowsCount = $connection->update($this->getTable('admin_user'), $bind, $where);
         }
 
         return $rowsCount > 0;
@@ -539,7 +549,7 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         $userId = (int)$user->getId();
         $table = $this->getTable('admin_passwords');
 
-        // purge expired passwords, except that should retain
+        // purge expired passwords, except those which should be retained
         $retainPasswordIds = $this->getConnection()->fetchCol(
             $this->getConnection()
                 ->select()
@@ -556,7 +566,7 @@ class User extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
         }
         $this->getConnection()->delete($table, $where);
 
-        // now get all remained passwords
+        // get all remaining passwords
         return $this->getConnection()->fetchCol(
             $this->getConnection()
                 ->select()

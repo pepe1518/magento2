@@ -21,8 +21,8 @@ contribute, and to detect bugs ([Linus'
 Law](http://en.wikipedia.org/wiki/Linus%27s_Law)).
 
 If possible, try to get acquainted with the public interface for the
-[Symfony/CS/Tokenizer/Tokens.php](Symfony/CS/Tokenizer/Tokens.php)
-and [Symfony/CS/Tokenizer/Token.php](Symfony/CS/Tokenizer/Token.php)
+[Tokens class](Symfony/CS/Tokenizer/Tokens.php)
+and [Token class](Symfony/CS/Tokenizer/Token.php)
 classes.
 
 ## Assumptions
@@ -30,9 +30,8 @@ classes.
 * You are familiar with Test Driven Development.
 * Forked FriendsOfPHP/PHP-CS-Fixer into your own Github Account.
 * Cloned your forked repository locally.
-* Downloaded PHP CS Fixer and have executed `php composer.phar
-install`.
-* You have read [`CONTRIBUTING.md`](CONTRIBUTING.md)
+* Installed the dependencies of PHP CS Fixer using [Composer](https://getcomposer.org/).
+* You have read [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Step by step
 
@@ -49,6 +48,7 @@ Create a new file in
 Put this content inside:
 ```php
 <?php
+
 /*
  * This file is part of the PHP CS utility.
  *
@@ -57,6 +57,7 @@ Put this content inside:
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
  */
+
 namespace Symfony\CS\Fixer\Contrib;
 
 use Symfony\CS\AbstractFixer;
@@ -65,8 +66,23 @@ use Symfony\CS\Tokenizer\Tokens;
 /**
  * @author Your name <your@email.com>
  */
-class RemoveCommentsFixer extends AbstractFixer
+final class RemoveCommentsFixer extends AbstractFixer
 {
+    /**
+     * {@inheritdoc}
+     */
+    public function fix(\SplFileInfo $file, $content)
+    {
+        // Add the fixing logic of the fixer here.
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription()
+    {
+        // Return a short description of the Fixer, it will be used in the README.rst.
+    }
 }
 ```
 
@@ -81,6 +97,7 @@ content inside:
 
 ```php
 <?php
+
 /*
  * This file is part of the PHP CS utility.
  *
@@ -89,14 +106,17 @@ content inside:
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
  */
+
 namespace Symfony\CS\Tests\Fixer\Contrib;
 
 use Symfony\CS\Tests\Fixer\AbstractFixerTestBase;
 
 /**
  * @author Your name <your@email.com>
+ *
+ * @internal
  */
-class RemoveCommentsFixerTest extends AbstractFixerTestBase
+final class RemoveCommentsFixerTest extends AbstractFixerTestBase
 {
     /**
      * @dataProvider provideFixCases
@@ -117,7 +137,7 @@ The files are created, one thing is still missing though: we need to
 update the README.md. Fortunately, PHP CS Fixer can help you here.
 Execute the following command in your command shell:
 
-`# php php-cs-fixer readme > README.rst`
+`$ php php-cs-fixer readme > README.rst`
 
 ### Step 2 - Using tests to define fixers behavior
 
@@ -162,6 +182,7 @@ like:
 `Symfony/CS/Tests/Fixer/Contrib/RemoveCommentsFixerTest.php`
 ```php
 <?php
+
 /*
  * This file is part of the PHP CS utility.
  *
@@ -170,14 +191,17 @@ like:
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
  */
+
 namespace Symfony\CS\Tests\Fixer\Contrib;
 
 use Symfony\CS\Tests\Fixer\AbstractFixerTestBase;
 
 /**
  * @author Your name <your@email.com>
+ *
+ * @internal
  */
-class RemoveCommentsFixerTest extends AbstractFixerTestBase
+final class RemoveCommentsFixerTest extends AbstractFixerTestBase
 {
     /**
      * @dataProvider provideFixCases
@@ -208,7 +232,7 @@ implement it.
 We need first to create one method to describe what this fixer does:
 `Symfony/CS/Fixer/Contrib/RemoveCommentsFixer.php`:
 ```php
-class RemoveCommentsFixer extends AbstractFixer
+final class RemoveCommentsFixer extends AbstractFixer
 {
     ...
     /**
@@ -224,7 +248,7 @@ class RemoveCommentsFixer extends AbstractFixer
 For now, let us just make a fixer that applies no modification:
 `Symfony/CS/Fixer/Contrib/RemoveCommentsFixer.php`:
 ```php
-class RemoveCommentsFixer extends AbstractFixer
+final class RemoveCommentsFixer extends AbstractFixer
 {
     /**
      * {@inheritdoc}
@@ -238,7 +262,8 @@ class RemoveCommentsFixer extends AbstractFixer
 }
 ```
 
-Run `vendor/bin/phpunit`. You are going to see that the tests fails.
+Run `$ phpunit Symfony/CS/Tests/Fixer/Contrib/RemoveCommentsFixerTest.php`.
+You are going to see that the tests fails.
 
 ### Break
 Now we have pretty much a cradle to work with. A file with a failing
@@ -274,7 +299,7 @@ We do not want all symbols to be analysed. Only `T_COMMENT`. So let us
 iterate the token(s) we are interested in.
 `Symfony/CS/Fixer/Contrib/RemoveCommentsFixer.php`:
 ```php
-class RemoveCommentsFixer extends AbstractFixer
+final class RemoveCommentsFixer extends AbstractFixer
 {
     /**
      * {@inheritdoc}
@@ -297,7 +322,7 @@ OK, now for each `T_COMMENT`, all we need to do is check if the previous
 token is a semicolon.
 `Symfony/CS/Fixer/Contrib/RemoveCommentsFixer.php`:
 ```php
-class RemoveCommentsFixer extends AbstractFixer
+final class RemoveCommentsFixer extends AbstractFixer
 {
     /**
      * {@inheritdoc}
@@ -324,6 +349,7 @@ class RemoveCommentsFixer extends AbstractFixer
 So the fixer in the end looks like this:
 ```php
 <?php
+
 /*
  * This file is part of the PHP CS utility.
  *
@@ -333,6 +359,7 @@ So the fixer in the end looks like this:
  * with this source code in the file LICENSE.
  *
  */
+
 namespace Symfony\CS\Fixer\Contrib;
 
 use Symfony\CS\AbstractFixer;
@@ -341,7 +368,7 @@ use Symfony\CS\Tokenizer\Tokens;
 /**
  * @author Your name <your@email.com>
  */
-class RemoveCommentsFixer extends AbstractFixer {
+final class RemoveCommentsFixer extends AbstractFixer {
     /**
      * {@inheritdoc}
      */

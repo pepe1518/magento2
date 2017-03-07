@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -39,7 +39,7 @@ class OrderSaveTest extends \PHPUnit_Framework_TestCase
      */
     protected $model;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->orderTaxFactoryMock = $this->getMockBuilder(
             '\Magento\Tax\Model\Sales\Order\TaxFactory'
@@ -132,7 +132,7 @@ class OrderSaveTest extends \PHPUnit_Framework_TestCase
         $index = 0;
         $itemTaxes = [];
         foreach ($expectedItemTaxes as $itemTax) {
-            $itemTaxMock = $this->getMockBuilder('\Magento\Tax\Model\Sales\Order\Tax\Item')
+            $itemTaxMock = $this->getMockBuilder(\Magento\Sales\Model\Order\Tax\Item::class)
                 ->disableOriginalConstructor()
                 ->setMethods(
                     [
@@ -177,10 +177,9 @@ class OrderSaveTest extends \PHPUnit_Framework_TestCase
             ->method('getItemAppliedTaxes')
             ->willReturn($itemAppliedTaxes);
 
-
         $orderItemMock = $this->getMockBuilder('\Magento\Sales\Model\Order\Item')
             ->disableOriginalConstructor()
-            ->setMethods(['getId', ])
+            ->setMethods(['getId'])
             ->getMock();
         $orderItemMock->expects($this->atLeastOnce())
             ->method('getId')
@@ -215,6 +214,93 @@ class OrderSaveTest extends \PHPUnit_Framework_TestCase
      */
     public function afterSaveDataProvider()
     {
+        $orderTaxDetailsApplied = $this->getMockBuilder('\Magento\Tax\Api\Data\OrderTaxDetailsAppliedTaxInterface')
+            ->disableOriginalConstructor()
+            ->setMethods(['getRates'])
+            ->getMockForAbstractClass();
+
+        $orderTaxDetailsApplied->expects($this->at(0))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 6,
+                        'code' => 'IL',
+                        'title' => 'IL',
+                    ],
+                    [
+                        'percent' => 5,
+                        'code' => 'US',
+                        'title' => 'US',
+                    ]
+                ]
+            );
+        $orderTaxDetailsApplied->expects($this->at(1))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 3,
+                        'code' => 'CityTax',
+                        'title' => 'CityTax',
+                    ],
+                ]
+            );
+        $orderTaxDetailsApplied->expects($this->at(2))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 6,
+                        'code' => 'IL',
+                        'title' => 'IL',
+                    ],
+                    [
+                        'percent' => 5,
+                        'code' => 'US',
+                        'title' => 'US',
+                    ],
+                ]
+            );
+        $orderTaxDetailsApplied->expects($this->at(3))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 3,
+                        'code' => 'CityTax',
+                        'title' => 'CityTax',
+                    ],
+                ]
+            );
+        $orderTaxDetailsApplied->expects($this->at(4))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 6,
+                        'code' => 'IL',
+                        'title' => 'IL',
+                    ],
+                    [
+                        'percent' => 5,
+                        'code' => 'US',
+                        'title' => 'US',
+                    ],
+                ]
+            );
+        $orderTaxDetailsApplied->expects($this->at(5))
+            ->method('getRates')
+            ->willReturn(
+                [
+                    [
+                        'percent' => 3,
+                        'code' => 'CityTax',
+                        'title' => 'CityTax',
+                    ],
+                ]
+            );
+
         return [
             //one item with shipping
             //three tax rates: state and national tax rates of 6 and 5 percent with priority 0
@@ -226,116 +312,63 @@ class OrderSaveTest extends \PHPUnit_Framework_TestCase
                         'base_amount' => 0.66,
                         'percent' => 11,
                         'id' => 'ILUS',
-                        'rates' => [
-                            [
-                                'percent' => 6,
-                                'code' => 'IL',
-                                'title' => 'IL',
-                            ],
-                            [
-                                'percent' => 5,
-                                'code' => 'US',
-                                'title' => 'US',
-                            ],
-                        ],
+                        'extension_attributes' => $orderTaxDetailsApplied,
                     ],
                     [
                         'amount' => 0.2,
                         'base_amount' => 0.2,
                         'percent' => 3.33,
                         'id' => 'CityTax',
-                        'rates' => [
-                            [
-                                'percent' => 3,
-                                'code' => 'CityTax',
-                                'title' => 'CityTax',
-                            ],
-                        ],
+                        'extension_attributes' => $orderTaxDetailsApplied,
                     ],
                 ],
                 'item_applied_taxes' => [
                     //item tax, three tax rates
                     [
                         //first two taxes are combined
-                        [
-                            'amount' => 0.11,
-                            'base_amount' => 0.11,
-                            'percent' => 11,
-                            'id' => 'ILUS',
-                            'rates' => [
-                                [
-                                    'percent' => 6,
-                                    'code' => 'IL',
-                                    'title' => 'IL',
-                                ],
-                                [
-                                    'percent' => 5,
-                                    'code' => 'US',
-                                    'title' => 'US',
-                                ],
+                        'item_id' => self::ITEMID,
+                        'type' => 'product',
+                        'associated_item_id' => null,
+                        'applied_taxes' => [
+                            [
+                                'amount' => 0.11,
+                                'base_amount' => 0.11,
+                                'percent' => 11,
+                                'id' => 'ILUS',
+                                'extension_attributes' => $orderTaxDetailsApplied,
                             ],
-                            'item_id' => self::ITEMID,
-                            'item_type' => 'product',
-                            'associated_item_id' => null,
-                        ],
-                        //city tax
-                        [
-                            'amount' => 0.03,
-                            'base_amount' => 0.03,
-                            'percent' => 3.33,
-                            'id' => 'CityTax',
-                            'rates' => [
-                                [
-                                    'percent' => 3,
-                                    'code' => 'CityTax',
-                                    'title' => 'CityTax',
-                                ],
+                            //city tax
+                            [
+                                'amount' => 0.03,
+                                'base_amount' => 0.03,
+                                'percent' => 3.33,
+                                'id' => 'CityTax',
+                                'extension_attributes' => $orderTaxDetailsApplied,
                             ],
-                            'item_id' => self::ITEMID,
-                            'item_type' => 'product',
-                            'associated_item_id' => null,
                         ],
                     ],
                     //shipping tax
                     [
                         //first two taxes are combined
-                        [
-                            'amount' => 0.55,
-                            'base_amount' => 0.55,
-                            'percent' => 11,
-                            'id' => 'ILUS',
-                            'rates' => [
-                                [
-                                    'percent' => 6,
-                                    'code' => 'IL',
-                                    'title' => 'IL',
-                                ],
-                                [
-                                    'percent' => 5,
-                                    'code' => 'US',
-                                    'title' => 'US',
-                                ],
+                        'item_id' => null,
+                        'type' => 'shipping',
+                        'associated_item_id' => null,
+                        'applied_taxes' => [
+                            [
+                                'amount' => 0.55,
+                                'base_amount' => 0.55,
+                                'percent' => 11,
+                                'id' => 'ILUS',
+                                'extension_attributes' => $orderTaxDetailsApplied,
                             ],
-                            'item_id' => null,
-                            'item_type' => 'shipping',
-                            'associated_item_id' => null,
-                        ],
-                        //city tax
-                        [
-                            'amount' => 0.17,
-                            'base_amount' => 0.17,
-                            'percent' => 3.33,
-                            'id' => 'CityTax',
-                            'rates' => [
-                                [
-                                    'percent' => 3,
-                                    'code' => 'CityTax',
-                                    'title' => 'CityTax',
-                                ],
+                            //city tax
+                            [
+                                'amount' => 0.17,
+                                'base_amount' => 0.17,
+                                'percent' => 3.33,
+                                'id' => 'CityTax',
+                                'extension_attributes' => $orderTaxDetailsApplied,
                             ],
-                            'item_id' => null,
-                            'item_type' => 'shipping',
-                            'associated_item_id' => null,
                         ],
                     ],
                 ],

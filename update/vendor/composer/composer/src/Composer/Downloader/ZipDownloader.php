@@ -15,8 +15,12 @@ namespace Composer\Downloader;
 use Composer\Config;
 use Composer\Cache;
 use Composer\EventDispatcher\EventDispatcher;
+use Composer\Package\PackageInterface;
+use Composer\Util\Platform;
 use Composer\Util\ProcessExecutor;
+use Composer\Util\RemoteFilesystem;
 use Composer\IO\IOInterface;
+use Symfony\Component\Process\ExecutableFinder;
 use ZipArchive;
 
 /**
@@ -25,20 +29,41 @@ use ZipArchive;
 class ZipDownloader extends ArchiveDownloader
 {
     protected $process;
+    protected static $hasSystemUnzip;
 
-    public function __construct(IOInterface $io, Config $config, EventDispatcher $eventDispatcher = null, Cache $cache = null, ProcessExecutor $process = null)
+    public function __construct(IOInterface $io, Config $config, EventDispatcher $eventDispatcher = null, Cache $cache = null, ProcessExecutor $process = null, RemoteFilesystem $rfs = null)
     {
         $this->process = $process ?: new ProcessExecutor($io);
-        parent::__construct($io, $config, $eventDispatcher, $cache);
+        parent::__construct($io, $config, $eventDispatcher, $cache, $rfs);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function download(PackageInterface $package, $path)
+    {
+        if (null === self::$hasSystemUnzip) {
+            $finder = new ExecutableFinder;
+            self::$hasSystemUnzip = (bool) $finder->find('unzip');
+        }
+
+        if (!class_exists('ZipArchive') && !self::$hasSystemUnzip) {
+            throw new \RuntimeException('The zip extension and unzip command are both missing, skipping');
+        }
+
+        return parent::download($package, $path);
     }
 
     protected function extract($file, $path)
     {
         $processError = null;
 
-        // try to use unzip on *nix
-        if (!defined('PHP_WINDOWS_VERSION_BUILD')) {
-            $command = 'unzip '.ProcessExecutor::escape($file).' -d '.ProcessExecutor::escape($path) . ' && chmod -R u+w ' . ProcessExecutor::escape($path);
+        if (self::$hasSystemUnzip) {
+            $command = 'unzip '.ProcessExecutor::escape($file).' -d '.ProcessExecutor::escape($path);
+            if (!Platform::isWindows()) {
+                $command .= ' && chmod -R u+w ' . ProcessExecutor::escape($path);
+            }
+
             try {
                 if (0 === $this->process->execute($command, $ignoredOutput)) {
                     return;
@@ -61,11 +86,7 @@ class ZipDownloader extends ArchiveDownloader
             }
 
             $error = "Could not decompress the archive, enable the PHP zip extension or install unzip.\n"
-                . $iniMessage . "\n" . $processError;
-
-            if (!defined('PHP_WINDOWS_VERSION_BUILD')) {
-                $error = "Could not decompress the archive, enable the PHP zip extension.\n" . $iniMessage;
-            }
+                . $iniMessage . ($processError ? "\n" . $processError : '');
 
             throw new \RuntimeException($error);
         }
@@ -73,11 +94,14 @@ class ZipDownloader extends ArchiveDownloader
         $zipArchive = new ZipArchive();
 
         if (true !== ($retval = $zipArchive->open($file))) {
-            throw new \UnexpectedValueException($this->getErrorMessage($retval, $file), $retval);
+            throw new \UnexpectedValueException(rtrim($this->getErrorMessage($retval, $file)."\n".$processError), $retval);
         }
 
         if (true !== $zipArchive->extractTo($path)) {
-            throw new \RuntimeException("There was an error extracting the ZIP file. Corrupt file?");
+            $this->io->writeError("<warn>As there is no 'unzip' command installed zip files are being unpacked using the PHP zip extension.</warn>");
+            $this->io->writeError("<warn>This may cause invalid reports of corrupted archives. Installing 'unzip' may remediate them.</warn>");
+
+            throw new \RuntimeException("There was an error extracting the ZIP file, it is either corrupted or using an invalid format");
         }
 
         $zipArchive->close();

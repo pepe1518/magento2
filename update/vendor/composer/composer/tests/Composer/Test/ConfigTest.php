@@ -35,7 +35,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $data = array();
         $data['local config inherits system defaults'] = array(
             array(
-                'packagist' => array('type' => 'composer', 'url' => 'https?://packagist.org', 'allow_ssl_downgrade' => true)
+                'packagist' => array('type' => 'composer', 'url' => 'https?://packagist.org', 'allow_ssl_downgrade' => true),
             ),
             array(),
         );
@@ -44,7 +44,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
             array(),
             array(
                 array('packagist' => false),
-            )
+            ),
         );
 
         $data['local config adds above defaults'] = array(
@@ -62,7 +62,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $data['system config adds above core defaults'] = array(
             array(
                 'example.com' => array('type' => 'composer', 'url' => 'http://example.com'),
-                'packagist' => array('type' => 'composer', 'url' => 'https?://packagist.org', 'allow_ssl_downgrade' => true)
+                'packagist' => array('type' => 'composer', 'url' => 'https?://packagist.org', 'allow_ssl_downgrade' => true),
             ),
             array(),
             array(
@@ -73,11 +73,11 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $data['local config can disable repos by name and re-add them anonymously to bring them above system config'] = array(
             array(
                 0 => array('type' => 'composer', 'url' => 'http://packagist.org'),
-                'example.com' => array('type' => 'composer', 'url' => 'http://example.com')
+                'example.com' => array('type' => 'composer', 'url' => 'http://example.com'),
             ),
             array(
                 array('packagist' => false),
-                array('type' => 'composer', 'url' => 'http://packagist.org')
+                array('type' => 'composer', 'url' => 'http://packagist.org'),
             ),
             array(
                 'example.com' => array('type' => 'composer', 'url' => 'http://example.com'),
@@ -87,10 +87,10 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $data['local config can override by name to bring a repo above system config'] = array(
             array(
                 'packagist' => array('type' => 'composer', 'url' => 'http://packagistnew.org'),
-                'example.com' => array('type' => 'composer', 'url' => 'http://example.com')
+                'example.com' => array('type' => 'composer', 'url' => 'http://example.com'),
             ),
             array(
-                'packagist' => array('type' => 'composer', 'url' => 'http://packagistnew.org')
+                'packagist' => array('type' => 'composer', 'url' => 'http://packagistnew.org'),
             ),
             array(
                 'example.com' => array('type' => 'composer', 'url' => 'http://example.com'),
@@ -110,6 +110,27 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         );
 
         return $data;
+    }
+
+    public function testPreferredInstallAsString()
+    {
+        $config = new Config(false);
+        $config->merge(array('config' => array('preferred-install' => 'source')));
+        $config->merge(array('config' => array('preferred-install' => 'dist')));
+
+        $this->assertEquals('dist', $config->get('preferred-install'));
+    }
+
+    public function testMergePreferredInstall()
+    {
+        $config = new Config(false);
+        $config->merge(array('config' => array('preferred-install' => 'dist')));
+        $config->merge(array('config' => array('preferred-install' => array('foo/*' => 'source'))));
+
+        // This assertion needs to make sure full wildcard preferences are placed last
+        // Handled by composer because we convert string preferences for BC, all other
+        // care for ordering and collision prevention is up to the user
+        $this->assertEquals(array('foo/*' => 'source', '*' => 'dist'), $config->get('preferred-install'));
     }
 
     public function testMergeGithubOauth()
@@ -139,7 +160,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $config->merge(array('config' => array(
             'bin-dir' => '$HOME/foo',
             'cache-dir' => '/baz/',
-            'vendor-dir' => 'vendor'
+            'vendor-dir' => 'vendor',
         )));
 
         $home = rtrim(getenv('HOME') ?: getenv('USERPROFILE'), '\\/');
@@ -148,12 +169,22 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('/baz', $config->get('cache-dir'));
     }
 
+    public function testStreamWrapperDirs()
+    {
+        $config = new Config(false, '/foo/bar');
+        $config->merge(array('config' => array(
+            'cache-dir' => 's3://baz/',
+        )));
+
+        $this->assertEquals('s3://baz', $config->get('cache-dir'));
+    }
+
     public function testFetchingRelativePaths()
     {
         $config = new Config(false, '/foo/bar');
         $config->merge(array('config' => array(
             'bin-dir' => '{$vendor-dir}/foo',
-            'vendor-dir' => 'vendor'
+            'vendor-dir' => 'vendor',
         )));
 
         $this->assertEquals('/foo/bar/vendor', $config->get('vendor-dir'));
@@ -165,9 +196,35 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     public function testOverrideGithubProtocols()
     {
         $config = new Config(false);
-        $config->merge(array('config' => array('github-protocols' => array('https', 'git'))));
+        $config->merge(array('config' => array('github-protocols' => array('https', 'ssh'))));
         $config->merge(array('config' => array('github-protocols' => array('https'))));
 
         $this->assertEquals(array('https'), $config->get('github-protocols'));
+    }
+
+    public function testGitDisabledByDefaultInGithubProtocols()
+    {
+        $config = new Config(false);
+        $config->merge(array('config' => array('github-protocols' => array('https', 'git'))));
+        $this->assertEquals(array('https'), $config->get('github-protocols'));
+
+        $config->merge(array('config' => array('secure-http' => false)));
+        $this->assertEquals(array('https', 'git'), $config->get('github-protocols'));
+    }
+
+    /**
+     * @group TLS
+     */
+    public function testDisableTlsCanBeOverridden()
+    {
+        $config = new Config;
+        $config->merge(
+            array('config' => array('disable-tls' => 'false'))
+        );
+        $this->assertFalse($config->get('disable-tls'));
+        $config->merge(
+            array('config' => array('disable-tls' => 'true'))
+        );
+        $this->assertTrue($config->get('disable-tls'));
     }
 }

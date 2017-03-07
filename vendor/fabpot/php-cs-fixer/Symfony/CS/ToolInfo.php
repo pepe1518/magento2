@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -19,7 +20,7 @@ namespace Symfony\CS;
 class ToolInfo
 {
     const COMPOSER_INSTALLED_FILE = '/../../composer/installed.json';
-    const COMPOSER_PACKAGE_NAME = 'fabpot/php-cs-fixer';
+    const COMPOSER_PACKAGE_NAME = 'friendsofphp/php-cs-fixer';
 
     public static function getComposerVersion()
     {
@@ -38,30 +39,6 @@ class ToolInfo
                     break;
                 }
             }
-        }
-
-        return $result;
-    }
-
-    private static function getScriptDir()
-    {
-        static $result;
-
-        if (null === $result) {
-            $script = $_SERVER['SCRIPT_NAME'];
-
-            if (is_link($script)) {
-                $linkTarget = readlink($script);
-
-                // If the link target is relative to the link
-                if (false === realpath($linkTarget)) {
-                    $linkTarget = dirname($script).'/'.$linkTarget;
-                }
-
-                $script = $linkTarget;
-            }
-
-            $result = dirname($script);
         }
 
         return $result;
@@ -93,6 +70,30 @@ class ToolInfo
 
         if (null === $result) {
             $result = !self::isInstalledAsPhar() && file_exists(self::getScriptDir().self::COMPOSER_INSTALLED_FILE);
+        }
+
+        return $result;
+    }
+
+    private static function getScriptDir()
+    {
+        static $result;
+
+        if (null === $result) {
+            $script = $_SERVER['SCRIPT_NAME'];
+
+            if (is_link($script)) {
+                $linkTarget = readlink($script);
+
+                // If the link target is relative to the link
+                if (false === realpath($linkTarget)) {
+                    $linkTarget = dirname($script).'/'.$linkTarget;
+                }
+
+                $script = $linkTarget;
+            }
+
+            $result = dirname($script);
         }
 
         return $result;

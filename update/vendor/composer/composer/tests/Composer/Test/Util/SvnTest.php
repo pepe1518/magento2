@@ -1,8 +1,20 @@
 <?php
+
+/*
+ * This file is part of Composer.
+ *
+ * (c) Nils Adermann <naderman@naderman.de>
+ *     Jordi Boggiano <j.boggiano@seld.be>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Composer\Test\Util;
 
 use Composer\Config;
 use Composer\IO\NullIO;
+use Composer\Util\Platform;
 use Composer\Util\Svn;
 
 class SvnTest extends \PHPUnit_Framework_TestCase
@@ -60,9 +72,9 @@ class SvnTest extends \PHPUnit_Framework_TestCase
         $config->merge(array(
             'config' => array(
                 'http-basic' => array(
-                    'svn.apache.org' => array('username' => 'foo', 'password' => 'bar')
-                )
-            )
+                    'svn.apache.org' => array('username' => 'foo', 'password' => 'bar'),
+                ),
+            ),
         ));
 
         $svn = new Svn($url, new NullIO, $config);
@@ -81,9 +93,9 @@ class SvnTest extends \PHPUnit_Framework_TestCase
             array(
                 'config' => array(
                     'http-basic' => array(
-                        'svn.apache.org' => array('username' => 'foo', 'password' => 'bar')
-                    )
-                )
+                        'svn.apache.org' => array('username' => 'foo', 'password' => 'bar'),
+                    ),
+                ),
             )
         );
 
@@ -104,9 +116,9 @@ class SvnTest extends \PHPUnit_Framework_TestCase
             array(
                 'config' => array(
                     'http-basic' => array(
-                        'svn.apache.org' => array('username' => 'foo', 'password' => 'bar')
-                    )
-                )
+                        'svn.apache.org' => array('username' => 'foo', 'password' => 'bar'),
+                    ),
+                ),
             )
         );
 
@@ -120,10 +132,6 @@ class SvnTest extends \PHPUnit_Framework_TestCase
 
     private function getCmd($cmd)
     {
-        if (defined('PHP_WINDOWS_VERSION_BUILD')) {
-            return strtr($cmd, "'", '"');
-        }
-
-        return $cmd;
+        return Platform::isWindows() ? strtr($cmd, "'", '"') : $cmd;
     }
 }

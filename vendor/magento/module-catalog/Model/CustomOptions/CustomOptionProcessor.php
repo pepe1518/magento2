@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Catalog\Model\CustomOptions;
@@ -24,6 +24,9 @@ class CustomOptionProcessor implements CartItemProcessorInterface
 
     /** @var CustomOptionFactory  */
     protected $customOptionFactory;
+
+    /** @var \Magento\Catalog\Model\Product\Option\UrlBuilder */
+    private $urlBuilder;
 
     /**
      * @param DataObject\Factory $objectFactory
@@ -62,7 +65,6 @@ class CustomOptionProcessor implements CartItemProcessorInterface
         }
         return null;
     }
-
 
     /**
      * @inheritDoc
@@ -117,10 +119,45 @@ class CustomOptionProcessor implements CartItemProcessorInterface
             $option = $this->customOptionFactory->create();
             $option->setOptionId($optionId);
             if (is_array($optionValue)) {
+                $optionValue = $this->processFileOptionValue($optionValue);
                 $optionValue = implode(',', $optionValue);
             }
             $option->setOptionValue($optionValue);
             $optionValue = $option;
         }
+    }
+
+    /**
+     * Returns option value with file built URL
+     *
+     * @param array $optionValue
+     * @return array
+     */
+    private function processFileOptionValue(array $optionValue)
+    {
+        if (array_key_exists('url', $optionValue) &&
+            array_key_exists('route', $optionValue['url']) &&
+            array_key_exists('params', $optionValue['url'])
+        ) {
+            $optionValue['url'] = $this->getUrlBuilder()->getUrl(
+                $optionValue['url']['route'],
+                $optionValue['url']['params']
+            );
+        }
+        return $optionValue;
+    }
+
+    /**
+     * @return \Magento\Catalog\Model\Product\Option\UrlBuilder
+     *
+     * @deprecated
+     */
+    private function getUrlBuilder()
+    {
+        if ($this->urlBuilder === null) {
+            $this->urlBuilder = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get('\Magento\Catalog\Model\Product\Option\UrlBuilder');
+        }
+        return $this->urlBuilder;
     }
 }

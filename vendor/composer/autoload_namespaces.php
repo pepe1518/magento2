@@ -7,21 +7,15 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Zend_' => array($vendorDir . '/magento/zendframework1/library'),
-    'System' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'Symfony\\Component\\Console\\' => array($vendorDir . '/symfony/console'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log'),
     'PHPMD\\' => array($vendorDir . '/phpmd/phpmd/src/main/php'),
     'PDepend\\' => array($vendorDir . '/pdepend/pdepend/src/main/php'),
     'OAuth\\Unit' => array($vendorDir . '/lusitanian/oauth/tests'),
     'OAuth' => array($vendorDir . '/lusitanian/oauth/src'),
-    'Net' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
-    'Math' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
     'MagentoHackathon\\Composer\\Magento' => array($vendorDir . '/magento/magento-composer-installer/src'),
     'Less' => array($vendorDir . '/oyejorge/less.php/lib'),
     'JShrink' => array($vendorDir . '/tedivm/jshrink/src'),
-    'File' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
-    'Crypt' => array($vendorDir . '/phpseclib/phpseclib/phpseclib'),
-    'Composer' => array($vendorDir . '/composer/composer/src'),
+    'Cm\\RedisSession\\' => array($vendorDir . '/colinmollenhour/php-redis-session-abstract/src'),
     'Braintree' => array($vendorDir . '/braintree/braintree_php/lib'),
     '' => array($baseDir . '/app/code'),
 );

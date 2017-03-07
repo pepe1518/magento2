@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -37,32 +38,37 @@ class FunctionDeclarationFixer extends AbstractFixer
                 continue;
             }
 
-            $startParenthesisIndex = $tokens->getNextTokenOfKind($index, array('('));
+            $startParenthesisIndex = $tokens->getNextTokenOfKind($index, array('(', ';', array(T_CLOSE_TAG)));
+            if (!$tokens[$startParenthesisIndex]->equals('(')) {
+                continue;
+            }
+
             $endParenthesisIndex = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_PARENTHESIS_BRACE, $startParenthesisIndex);
             $startBraceIndex = $tokens->getNextTokenOfKind($endParenthesisIndex, array(';', '{'));
-            $startBraceToken = $tokens[$startBraceIndex];
 
-            if ($startBraceToken->equals('{')) {
-                // fix single-line whitespace before {
-                // eg: `function foo(){}` => `function foo() {}`
-                // eg: `function foo()   {}` => `function foo() {}`
-                if (
+            // fix single-line whitespace before {
+            // eg: `function foo(){}` => `function foo() {}`
+            // eg: `function foo()   {}` => `function foo() {}`
+            if (
+                $tokens[$tokens->getPrevNonWhitespace($startBraceIndex)]->equals(')') &&
+                $tokens[$startBraceIndex]->equals('{') &&
+                (
                     !$tokens[$startBraceIndex - 1]->isWhitespace() ||
                     $tokens[$startBraceIndex - 1]->isWhitespace($this->singleLineWhitespaceOptions)
-                ) {
-                    $tokens->ensureWhitespaceAtIndex($startBraceIndex - 1, 1, ' ');
-                }
+                )
+            ) {
+                $tokens->ensureWhitespaceAtIndex($startBraceIndex - 1, 1, ' ');
             }
 
             $afterParenthesisIndex = $tokens->getNextNonWhitespace($endParenthesisIndex);
             $afterParenthesisToken = $tokens[$afterParenthesisIndex];
 
             if ($afterParenthesisToken->isGivenKind(T_USE)) {
+                // fix whitespace after T_USE (we might add a token, so do this before determining start and end parenthesis)
+                $tokens->ensureWhitespaceAtIndex($afterParenthesisIndex + 1, 0, ' ');
+
                 $useStartParenthesisIndex = $tokens->getNextTokenOfKind($afterParenthesisIndex, array('('));
                 $useEndParenthesisIndex = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_PARENTHESIS_BRACE, $useStartParenthesisIndex);
-
-                // fix whitespace after T_USE
-                $tokens->ensureWhitespaceAtIndex($afterParenthesisIndex + 1, 0, ' ');
 
                 // remove single-line edge whitespaces inside use parentheses
                 $this->fixParenthesisInnerEdge($tokens, $useStartParenthesisIndex, $useEndParenthesisIndex);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Paypal\Test\Unit\Model;
@@ -97,17 +97,6 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
         $this->assertNotContains(Config::METHOD_WPP_BML, $this->model->getCountryMethods('HK'));
         $this->assertNotContains(Config::METHOD_WPP_PE_BML, $this->model->getCountryMethods('DE'));
         $this->assertNotContains(Config::METHOD_WPP_BML, $this->model->getCountryMethods('DE'));
-    }
-
-    public function testGetBuildNotationCode()
-    {
-        $this->model->setMethod('payflow_direct');
-        $this->model->setStoreId(123);
-        $this->scopeConfig->expects($this->once())
-            ->method('getValue')
-            ->with('paypal/bncode', ScopeInterface::SCOPE_STORE, 123)
-            ->will($this->returnValue('some BN code'));
-        $this->assertEquals('some BN code', $this->model->getBuildNotationCode());
     }
 
     public function testIsMethodActive()

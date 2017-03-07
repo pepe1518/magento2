@@ -1,30 +1,34 @@
 <?php
+namespace Test\Braintree;
 
-class Braintree_OAuthTestHelper
+use Braintree;
+
+class OAuthTestHelper
 {
     public static function createGrant($gateway, $params)
     {
-        $http = new Braintree_HttpOAuth($gateway->config);
-        $response = $http->post('/oauth_testing/grants', $params);
-        return $response['code'];
+        $http = new Braintree\Http($gateway->config);
+        $http->useClientCredentials();
+        $response = $http->post('/oauth_testing/grants', ['grant' => $params]);
+        return $response['grant']['code'];
     }
 
     public static function createCredentials($params)
     {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => $params['clientId'],
             'clientSecret' => $params['clientSecret']
-        ));
+        ]);
 
-        $code = Braintree_OAuthTestHelper::createGrant($gateway, array(
+        $code = OAuthTestHelper::createGrant($gateway, [
             'merchant_public_id' => $params['merchantId'],
             'scope' => 'read_write'
-        ));
+        ]);
 
-        $credentials = $gateway->oauth()->createTokenFromCode(array(
+        $credentials = $gateway->oauth()->createTokenFromCode([
             'code' => $code,
             'scope' => 'read_write',
-        ));
+        ]);
 
         return $credentials;
     }

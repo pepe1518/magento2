@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 /*jshint regexdash:true eqnull:true browser:true jquery:true*/
@@ -101,14 +101,14 @@
         'SO': [new RegExp('^(6334[5-9]([0-9]{11}|[0-9]{13,14}))|(6767([0-9]{12}|[0-9]{14,15}))$'), new RegExp('^([0-9]{3}|[0-9]{4})?$'), true],
         'SM': [new RegExp('(^(5[0678])[0-9]{11,18}$)|(^(6[^05])[0-9]{11,18}$)|(^(601)[^1][0-9]{9,16}$)|(^(6011)[0-9]{9,11}$)|(^(6011)[0-9]{13,16}$)|(^(65)[0-9]{11,13}$)|(^(65)[0-9]{15,18}$)|(^(49030)[2-9]([0-9]{10}$|[0-9]{12,13}$))|(^(49033)[5-9]([0-9]{10}$|[0-9]{12,13}$))|(^(49110)[1-2]([0-9]{10}$|[0-9]{12,13}$))|(^(49117)[4-9]([0-9]{10}$|[0-9]{12,13}$))|(^(49118)[0-2]([0-9]{10}$|[0-9]{12,13}$))|(^(4936)([0-9]{12}$|[0-9]{14,15}$))'), new RegExp('^([0-9]{3}|[0-9]{4})?$'), true],
         'VI': [new RegExp('^4[0-9]{12}([0-9]{3})?$'), new RegExp('^[0-9]{3}$'), true],
-        'MC': [new RegExp('^5[1-5][0-9]{14}$'), new RegExp('^[0-9]{3}$'), true],
+        'MC': [new RegExp('^(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[0-9]{12}$'), new RegExp('^[0-9]{3}$'), true],
         'AE': [new RegExp('^3[47][0-9]{13}$'), new RegExp('^[0-9]{4}$'), true],
-        'DI': [new RegExp('^(30[0-5][0-9]{13}|3095[0-9]{12}|35(2[8-9][0-9]{12}|[3-8][0-9]{13})|36[0-9]{12}|3[8-9][0-9]{14}|6011(0[0-9]{11}|[2-4][0-9]{11}|74[0-9]{10}|7[7-9][0-9]{10}|8[6-9][0-9]{10}|9[0-9]{11})|62(2(12[6-9][0-9]{10}|1[3-9][0-9]{11}|[2-8][0-9]{12}|9[0-1][0-9]{11}|92[0-5][0-9]{10})|[4-6][0-9]{13}|8[2-8][0-9]{12})|6(4[4-9][0-9]{13}|5[0-9]{14}))$'), new RegExp('^[0-9]{3}$'), true],
-        'JCB': [new RegExp('^(30[0-5][0-9]{13}|3095[0-9]{12}|35(2[8-9][0-9]{12}|[3-8][0-9]{13})|36[0-9]{12}|3[8-9][0-9]{14}|6011(0[0-9]{11}|[2-4][0-9]{11}|74[0-9]{10}|7[7-9][0-9]{10}|8[6-9][0-9]{10}|9[0-9]{11})|62(2(12[6-9][0-9]{10}|1[3-9][0-9]{11}|[2-8][0-9]{12}|9[0-1][0-9]{11}|92[0-5][0-9]{10})|[4-6][0-9]{13}|8[2-8][0-9]{12})|6(4[4-9][0-9]{13}|5[0-9]{14}))$'), new RegExp('^[0-9]{3}$'), true],
-        'OT': [new RegExp('^([0-9]+)$'), new RegExp('^([0-9]{3}|[0-9]{4})?$'), false],
-        'DN': [new RegExp('^3((0([0-5]\\d*)?)|[689]\\d*)?$'), new RegExp('^[0-9]{3}$'), true],
-        'UN': [new RegExp('^6(2\\d*)?$'), new RegExp('^[0-9]{3}$'), true],
-        'MI': [new RegExp('^((5((0|[6-9])\\d*)?)|(6|6[37]\\d*))$'), new RegExp('^[0-9]{3}$'), true]
+        'DI': [new RegExp('^(6011(0|[2-4]|74|7[7-9]|8[6-9]|9)|6(4[4-9]|5))\\d*$'), new RegExp('^[0-9]{3}$'), true],
+        'JCB': [new RegExp('^35(2[8-9]|[3-8])\\d*$'), new RegExp('^[0-9]{3}$'), true],
+        'DN': [new RegExp('^(3(0[0-5]|095|6|[8-9]))\\d*$'), new RegExp('^[0-9]{3}$'), true],
+        'UN': [new RegExp('^(622(1(2[6-9]|[3-9])|[3-8]|9([[0-1]|2[0-5]))|62[4-6]|628([2-8]))\\d*?$'), new RegExp('^[0-9]{3}$'), true],
+        'MI': [new RegExp('^(5(0|[6-9])|63|67(?!59|6770|6774))\\d*$'), new RegExp('^[0-9]{3}$'), true],
+        'MD': [new RegExp('^6759(?!24|38|40|6[3-9]|70|76)|676770|676774\\d*$'), new RegExp('^[0-9]{3}$'), true]
     };
 
     /**
@@ -147,17 +147,17 @@
      *
      * @return {Boolean}
      */
-    function tableSingleValidation (value, element) {
+    function tableSingleValidation(value, element) {
         var empty = $(element).closest('table')
             .find('input.required-option:visible')
-            .filter(function(i, el){
+            .filter(function (i, el) {
                 return $.mage.isEmpty(el.value);
             })
             .length;
         return empty === 0;
     }
 
-        /**
+    /**
      * Collection of validation rules including rules from additional-methods.js
      * @type {Object}
      */
@@ -513,7 +513,7 @@
                 }
                 return !(pass.length > 0 && pass.length < 6);
             },
-            'Please enter 6 or more characters. Leading or trailing spaces will be ignored.'
+            'Please enter 6 or more characters. Leading and trailing spaces will be ignored.'
         ],
         "validate-admin-password": [
             function (v) {
@@ -534,6 +534,46 @@
                 return true;
             },
             'Please enter 7 or more characters, using both numeric and alphabetic.'
+        ],
+        "validate-customer-password": [
+            function (v, elm) {
+                var validator = this,
+                    length = 0,
+                    counter = 0;
+                var passwordMinLength = $(elm).data('password-min-length');
+                var passwordMinCharacterSets = $(elm).data('password-min-character-sets');
+                var pass = $.trim(v);
+                var result = pass.length >= passwordMinLength;
+                if (result == false) {
+                    validator.passwordErrorMessage = $.mage.__(
+                        "Minimum length of this field must be equal or greater than %1 symbols." +
+                        " Leading and trailing spaces will be ignored."
+                    ).replace('%1', passwordMinLength);
+                    return result;
+                }
+                if (pass.match(/\d+/)) {
+                    counter ++;
+                }
+                if (pass.match(/[a-z]+/)) {
+                    counter ++;
+                }
+                if (pass.match(/[A-Z]+/)) {
+                    counter ++;
+                }
+                if (pass.match(/[^a-zA-Z0-9]+/)) {
+                    counter ++;
+                }
+                if (counter < passwordMinCharacterSets) {
+                    result = false;
+                    validator.passwordErrorMessage = $.mage.__(
+                        "Minimum of different classes of characters in password is %1." +
+                        " Classes of characters: Lower Case, Upper Case, Digits, Special Characters."
+                    ).replace('%1', passwordMinCharacterSets);
+                }
+                return result;
+            }, function () {
+                return this.passwordErrorMessage;
+            }
         ],
         "validate-url": [
             function (v) {
@@ -976,7 +1016,7 @@
                 if ($.mage.isEmpty(value)) {
                     return true;
                 }
-                var valid_regexp = /^[a-z0-9\._-]{1,30}@([a-z0-9_-]{1,30}\.){1,5}[a-z]{2,4}$/i,
+                var valid_regexp = /^([a-z0-9,!\#\$%&'\*\+\/=\?\^_`\{\|\}~-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z0-9,!\#\$%&'\*\+\/=\?\^_`\{\|\}~-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*@([a-z0-9-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z0-9-]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*\.(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]){2,})$/i,
                     emails = value.split(/[\s\n\,]+/g);
                 for (var i = 0; i < emails.length; i++) {
                     if (!valid_regexp.test(emails[i].trim())) {
@@ -1158,7 +1198,7 @@
                 }
                 return true;
             },
-            'Please enter 6 or more characters. Leading or trailing spaces will be ignored.'
+            'Please enter 6 or more characters. Leading and trailing spaces will be ignored.'
         ],
         'required-if-not-specified': [
             function (value, element, params) {
@@ -1210,7 +1250,7 @@
                 });
 
                 return valid;
-            }, 'Enter valid SKU key'
+            }, 'Please enter valid SKU key.'
         ],
         'required-if-specified': [
             function (value, element, params) {
@@ -1256,9 +1296,22 @@
             },
             'Please enter a valid number.'
         ],
+        'datetime-validation': [
+            function (value, element) {
+                var isValid = true;
+
+                if ($(element).val().length === 0) {
+                    isValid = false;
+                    $(element).addClass('mage-error');
+                }
+
+                return isValid;
+            },
+            'This is required field'
+        ],
         'required-text-swatch-entry': [
             tableSingleValidation,
-            'Swatch and Admin are the required fields in the each row.'
+            'Admin is a required field in the each row.'
         ],
         'required-visual-swatch-entry': [
             tableSingleValidation,
@@ -1334,7 +1387,6 @@
         element = $(element);
         var form = element.get(0).form,
             validator = form ? $(form).data('validator') : null;
-
         if (validator) {
             return validator.element(element.get(0));
         } else {
@@ -1348,6 +1400,67 @@
             }, this));
             return valid;
         }
+    };
+
+    var originValidateDelegate = $.fn.validateDelegate;
+
+    $.fn.validateDelegate = function () {
+        if (!this[0].form) {
+            return this;
+        }
+
+        return originValidateDelegate.apply(this, arguments);
+    };
+
+    /**
+     * Validate single element.
+     *
+     * @param {Element} element
+     * @returns {*}
+     */
+    $.validator.validateSingleElement = function (element) {
+        var errors = {},
+            valid = true,
+            validateConfig = {
+                errorElement: 'label',
+                ignore: '.ignore-validate'
+            },
+            form, validator, classes;
+
+        element = $(element).not(validateConfig.ignore);
+
+        if (!element.length) {
+            return true;
+        }
+
+        form = element.get(0).form;
+        validator = form ? $(form).data('validator') : null;
+
+        if (validator) {
+            return validator.element(element.get(0));
+        }
+
+        classes = element.prop('class').split(' ');
+        validator = element.parent().data('validator') ||
+            $.mage.validation(validateConfig, element.parent()).validate;
+
+        element.removeClass(validator.settings.errorClass);
+        validator.toHide = validator.toShow;
+        validator.hideErrors();
+        validator.toShow = validator.toHide = $([]);
+
+        $.each(classes, $.proxy(function (i, className) {
+            if (this.methods[className] && !this.methods[className](element.val(), element.get(0))) {
+                valid = false;
+                errors[element.get(0).name] = this.messages[className];
+                validator.invalid[element.get(0).name] = true;
+                validator.showErrors(errors);
+
+                return valid;
+            }
+        }, this));
+
+        return valid;
     };
 
     $.widget("mage.validation", {

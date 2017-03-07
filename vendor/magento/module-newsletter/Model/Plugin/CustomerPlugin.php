@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Newsletter\Model\Plugin;
@@ -42,6 +42,35 @@ class CustomerPlugin
         return $customer;
     }
 
+    /**
+     * Plugin around customer repository save. If we have extension attribute (is_subscribed) we need to subscribe that customer
+     *
+     * @param CustomerRepository $subject
+     * @param \Closure $proceed
+     * @param CustomerInterface $customer
+     * @param null $passwordHash
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function aroundSave(
+        CustomerRepository $subject,
+        \Closure $proceed,
+        CustomerInterface $customer,
+        $passwordHash = null
+    ) {
+        /** @var CustomerInterface $savedCustomer */
+        $savedCustomer = $proceed($customer, $passwordHash);
+
+        if ($savedCustomer->getId() && $customer->getExtensionAttributes()) {
+            if ($customer->getExtensionAttributes()->getIsSubscribed() === true) {
+                $this->subscriberFactory->create()->subscribeCustomerById($savedCustomer->getId());
+            } elseif ($customer->getExtensionAttributes()->getIsSubscribed() === false) {
+                $this->subscriberFactory->create()->unsubscribeCustomerById($savedCustomer->getId());
+            }
+        }
+
+        return $savedCustomer;
+    }
+    
     /**
      * Plugin around delete customer that updates any newsletter subscription that may have existed.
      *

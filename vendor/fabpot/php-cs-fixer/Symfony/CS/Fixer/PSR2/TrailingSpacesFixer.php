@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -39,7 +40,7 @@ class TrailingSpacesFixer extends AbstractFixer
             $lines = preg_split("/([\r\n]+)/", $token->getContent(), -1, PREG_SPLIT_DELIM_CAPTURE);
             $linesSize = count($lines);
 
-            // fix only multiline whitespaces or singleline whitespaces at the and of file
+            // fix only multiline whitespaces or singleline whitespaces at the end of file
             if ($linesSize > 1 || !isset($tokens[$index + 1])) {
                 $lines[0] = rtrim($lines[0], " \t");
 
@@ -70,6 +71,7 @@ class TrailingSpacesFixer extends AbstractFixer
      */
     public function getPriority()
     {
-        return 20;
+        // should be run after NoEmptyPhpdocFixer, UnneededControlParenthesesFixer, ClassDefinitionFixer, CombineConsecutiveUnsetsFixer, NoEmptyStatementFixer and NoUselessElseFixer.
+        return 0;
     }
 }

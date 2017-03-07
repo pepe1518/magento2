@@ -2,7 +2,7 @@
 /**
  * Application configuration object. Used to access configuration when application is installed.
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -11,6 +11,9 @@ namespace Magento\Framework\App;
 use Magento\Framework\App\Config\MutableScopeConfigInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
+/**
+ * @inheritdoc
+ */
 class MutableScopeConfig extends Config implements MutableScopeConfigInterface
 {
     /**

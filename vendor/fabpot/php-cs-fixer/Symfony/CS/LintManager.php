@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -28,10 +29,22 @@ class LintManager
      */
     private $temporaryFile;
 
+    /**
+     * Files removal handler.
+     *
+     * @var FileRemoval
+     */
+    private $fileRemoval;
+
+    public function __construct()
+    {
+        $this->fileRemoval = new FileRemoval();
+    }
+
     public function __destruct()
     {
         if (null !== $this->temporaryFile) {
-            unlink($this->temporaryFile);
+            $this->fileRemoval->delete($this->temporaryFile);
         }
     }
 
@@ -66,12 +79,12 @@ class LintManager
     public function createProcessForSource($source)
     {
         if (null === $this->temporaryFile) {
-            $this->temporaryFile = tempnam('.', 'tmp');
+            $this->temporaryFile = tempnam('.', 'cs_fixer_tmp_');
+            $this->fileRemoval->observe($this->temporaryFile);
         }
 
         file_put_contents($this->temporaryFile, $source);
-        $process = $this->createProcessForFile($this->temporaryFile);
 
-        return $process;
+        return $this->createProcessForFile($this->temporaryFile);
     }
 }

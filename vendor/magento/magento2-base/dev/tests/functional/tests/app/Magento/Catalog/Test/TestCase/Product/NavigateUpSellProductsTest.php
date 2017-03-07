@@ -1,12 +1,10 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 namespace Magento\Catalog\Test\TestCase\Product;
-
-use Magento\Mtf\Fixture\InjectableFixture;
 
 /**
  * Preconditions:
@@ -22,7 +20,7 @@ use Magento\Mtf\Fixture\InjectableFixture;
 class NavigateUpSellProductsTest extends AbstractProductPromotedProductsTest
 {
     /* tags */
-    const TEST_TYPE = 'acceptance_test';
+    const TEST_TYPE = 'acceptance_test, extended_acceptance_test';
     const MVP = 'yes';
     const DOMAIN = 'MX';
     /* end tags */

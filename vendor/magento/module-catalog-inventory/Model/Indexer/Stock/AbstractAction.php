@@ -2,13 +2,14 @@
 /**
  * @category    Magento
  * @package     Magento_CatalogInventory
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
 namespace Magento\CatalogInventory\Model\Indexer\Stock;
 
 use Magento\Catalog\Model\Category;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\App\ResourceConnection;
 
 /**
@@ -64,7 +65,6 @@ abstract class AbstractAction
      * @var \Magento\Framework\Event\ManagerInterface
      */
     private $eventManager;
-
 
     /**
      * @param ResourceConnection $resource
@@ -247,17 +247,10 @@ abstract class AbstractAction
                 $indexer->reindexEntity($byType[$indexer->getTypeId()]);
             }
         }
-
-        $select = $connection->select()
-            ->distinct(true)
-            ->from($this->_getTable('catalog_category_product'), ['category_id'])
-            ->where('product_id IN(?)', $processIds);
-
-        $affectedCategories = $connection->fetchCol($select);
-        $this->cacheContext->registerEntities(Category::CACHE_TAG, $affectedCategories);
-
+        
+        $this->cacheContext->registerEntities(Product::CACHE_TAG, $productIds);
         $this->eventManager->dispatch('clean_cache_by_tags', ['object' => $this->cacheContext]);
-
+        
         return $this;
     }
 

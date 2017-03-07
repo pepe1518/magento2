@@ -34,9 +34,6 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
         putenv('PATH='.$path);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testFind()
     {
         if (ini_get('open_basedir')) {
@@ -67,9 +64,6 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $result);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testFindWithExtraDirs()
     {
         if (ini_get('open_basedir')) {
@@ -86,9 +80,6 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
         $this->assertSamePath(PHP_BINARY, $result);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testFindWithOpenBaseDir()
     {
         if ('\\' === DIRECTORY_SEPARATOR) {
@@ -99,7 +90,7 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
             $this->markTestSkipped('Cannot test when open_basedir is set');
         }
 
-        $this->iniSet('open_basedir', dirname(PHP_BINARY).(!defined('HHVM_VERSION') ? PATH_SEPARATOR.'/' : ''));
+        $this->iniSet('open_basedir', dirname(PHP_BINARY).(!defined('HHVM_VERSION') || HHVM_VERSION_ID >= 30800 ? PATH_SEPARATOR.'/' : ''));
 
         $finder = new ExecutableFinder();
         $result = $finder->find($this->getPhpBinaryName());
@@ -107,9 +98,6 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
         $this->assertSamePath(PHP_BINARY, $result);
     }
 
-    /**
-     * @requires PHP 5.4
-     */
     public function testFindProcessInOpenBasedir()
     {
         if (ini_get('open_basedir')) {
@@ -120,7 +108,7 @@ class ExecutableFinderTest extends \PHPUnit_Framework_TestCase
         }
 
         $this->setPath('');
-        $this->iniSet('open_basedir', PHP_BINARY.(!defined('HHVM_VERSION') ? PATH_SEPARATOR.'/' : ''));
+        $this->iniSet('open_basedir', PHP_BINARY.(!defined('HHVM_VERSION') || HHVM_VERSION_ID >= 30800 ? PATH_SEPARATOR.'/' : ''));
 
         $finder = new ExecutableFinder();
         $result = $finder->find($this->getPhpBinaryName(), false);

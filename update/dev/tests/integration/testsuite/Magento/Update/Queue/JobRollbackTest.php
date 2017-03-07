@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Update\Queue;
@@ -44,7 +44,14 @@ class JobRollbackTest extends \PHPUnit_Framework_TestCase
             new \Magento\Update\Status(),
             $maintenanceMode
         );
-        $this->setExpectedException('RuntimeException', sprintf('"%s" backup file does not exist.', $backupFileName));
+        $this->setExpectedException(
+            'RuntimeException',
+            sprintf(
+                'Cannot create phar \'%s\', file extension (or combination) not recognised'.
+                ' or the directory does not exist',
+                $backupFileName
+            )
+        );
         $jobRollback->execute();
     }
 }

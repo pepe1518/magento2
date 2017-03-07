@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 /** @var string $statusMessage */
@@ -36,14 +36,24 @@
                         <span>Home</span>
                     </a>
                 </li>
-                <li class="item-component level-0 <?php echo $headerTitle !== 'System Upgrade' ? '_active' : '' ?>" >
+                <li class="item-extension level-0 <?php echo preg_match('/^(Uninstall|Update|New).*$/i', $headerTitle) ? '_active' : '' ?>">
                     <a>
-                        <span>Component Manager</span>
+                        <span>Extension Manager</span>
+                    </a>
+                </li>
+                <li class="item-component level-0 <?php echo preg_match('/^(Disable|Enable).*$/', $headerTitle) ? '_active' : '' ?>" >
+                    <a>
+                        <span>Module Manager</span>
                     </a>
                 </li>
                 <li class="item-upgrade level-0 <?php echo $headerTitle === 'System Upgrade' ? '_active' : '' ?>">
                     <a>
                         <span>System Upgrade</span>
+                    </a>
+                </li>
+                <li class="item-system-config level-0">
+                    <a>
+                        <span>System Config</span>
                     </a>
                 </li>
             </ul>

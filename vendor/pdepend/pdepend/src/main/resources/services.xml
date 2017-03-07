@@ -37,6 +37,10 @@
             <tag name="pdepend.logger" option="--summary-xml" message="Generates a xml log with all metrics." />
         </service>
 
+        <service id="pdepend.report.dependencies.xml" class="PDepend\Report\Dependencies\Xml">
+            <tag name="pdepend.logger" option="--dependency-xml" message="Generates a xml log with all dependencies." />
+        </service>
+
         <service id="pdepend.report.jdepend.xml" class="PDepend\Report\Jdepend\Xml">
             <tag name="pdepend.logger" option="--jdepend-xml" message="Generates the package dependency log." />
         </service>
@@ -88,6 +92,10 @@
             <tag name="pdepend.analyzer" />
         </service>
 
+        <service id="pdepend.analyzer.class_dependency" class="PDepend\Metrics\Analyzer\ClassDependencyAnalyzer">
+            <tag name="pdepend.analyzer" />
+        </service>
+
         <service id="pdepend.analyzer.hierarchy" class="PDepend\Metrics\Analyzer\HierarchyAnalyzer">
             <tag name="pdepend.analyzer" />
         </service>
@@ -105,6 +113,14 @@
         </service>
 
         <service id="pdepend.analyzer.node_loc" class="PDepend\Metrics\Analyzer\NodeLocAnalyzer">
+            <tag name="pdepend.analyzer" />
+        </service>
+
+        <service id="pdepend.analyzer.halstead" class="PDepend\Metrics\Analyzer\HalsteadAnalyzer">
+            <tag name="pdepend.analyzer" />
+        </service>
+
+        <service id="pdepend.analyzer.maintainability" class="PDepend\Metrics\Analyzer\MaintainabilityIndexAnalyzer">
             <tag name="pdepend.analyzer" />
         </service>
     </services>

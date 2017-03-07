@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -66,7 +66,7 @@ class ViewfileTest extends \PHPUnit_Framework_TestCase
      */
     protected $requestMock;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $this->requestMock = $this->getMock('Magento\Framework\App\RequestInterface', [], [], '', false);
@@ -169,7 +169,7 @@ class ViewfileTest extends \PHPUnit_Framework_TestCase
             ->willReturnMap([['file', null, null], ['image', null, $decodedFile]]);
 
         $this->directoryMock->expects($this->once())->method('getAbsolutePath')->with($fileName)->willReturn($path);
-        $this->directoryMock->expects($this->once())->method('stat')->with($path)->willReturn($stat);
+        $this->directoryMock->expects($this->once())->method('stat')->with($fileName)->willReturn($stat);
 
         $this->fileSystemMock->expects($this->once())->method('getDirectoryRead')
             ->with(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA)
@@ -184,7 +184,6 @@ class ViewfileTest extends \PHPUnit_Framework_TestCase
                     ['Magento\MediaStorage\Helper\File\Storage', $this->storage]
                 ]
             );
-
 
         $this->urlDecoderMock->expects($this->once())->method('decode')->with($decodedFile)->willReturn($file);
 

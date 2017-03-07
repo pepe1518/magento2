@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -18,7 +19,7 @@ use Symfony\CS\Utils;
  *
  * It internally splits it up into "lines" that we can manipulate.
  *
- * @author Graham Campbell <graham@mineuk.com>
+ * @author Graham Campbell <graham@alt-three.com>
  */
 class DocBlock
 {
@@ -46,6 +47,16 @@ class DocBlock
         foreach (Utils::splitLines($content) as $line) {
             $this->lines[] = new Line($line);
         }
+    }
+
+    /**
+     * Get the string representation of object.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->getContent();
     }
 
     /**
@@ -101,29 +112,6 @@ class DocBlock
         return $this->annotations;
     }
 
-    private function findAnnotationLength($start)
-    {
-        $index = $start;
-
-        while ($line = $this->getLine(++$index)) {
-            if ($line->containsATag()) {
-                // we've 100% reached the end of the description if we get here
-                break;
-            }
-
-            if (!$line->containsUsefulContent()) {
-                // if we next line is also non-useful, or contains a tag, then we're done here
-                $next = $this->getLine($index + 1);
-                if (null === $next || !$next->containsUsefulContent() || $next->containsATag()) {
-                    break;
-                }
-                // otherwise, continue, the annotation must have contained a blank line in its description
-            }
-        }
-
-        return $index - $start;
-    }
-
     /**
      * Get a single annotation.
      *
@@ -176,13 +164,26 @@ class DocBlock
         return implode($this->lines);
     }
 
-    /**
-     * Get the string representation of object.
-     *
-     * @return string
-     */
-    public function __toString()
+    private function findAnnotationLength($start)
     {
-        return $this->getContent();
+        $index = $start;
+
+        while ($line = $this->getLine(++$index)) {
+            if ($line->containsATag()) {
+                // we've 100% reached the end of the description if we get here
+                break;
+            }
+
+            if (!$line->containsUsefulContent()) {
+                // if we next line is also non-useful, or contains a tag, then we're done here
+                $next = $this->getLine($index + 1);
+                if (null === $next || !$next->containsUsefulContent() || $next->containsATag()) {
+                    break;
+                }
+                // otherwise, continue, the annotation must have contained a blank line in its description
+            }
+        }
+
+        return $index - $start;
     }
 }

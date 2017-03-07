@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Quote\Setup;
@@ -28,6 +28,11 @@ class QuoteSetup extends EavSetup
      * @var \Magento\Framework\Encryption\EncryptorInterface
      */
     protected $_encryptor;
+
+    /**
+     * @var string
+     */
+    private static $connectionName = 'checkout';
 
     /**
      * @param ModuleDataSetupInterface $setup
@@ -70,8 +75,11 @@ class QuoteSetup extends EavSetup
      */
     protected function _flatTableExist($table)
     {
-        $tablesList = $this->getSetup()->getConnection()->listTables();
-        return in_array(strtoupper($this->getSetup()->getTable($table)), array_map('strtoupper', $tablesList));
+        $tablesList = $this->getSetup()->getConnection(self::$connectionName)->listTables();
+        return in_array(
+            strtoupper($this->getSetup()->getTable($table, self::$connectionName)),
+            array_map('strtoupper', $tablesList)
+        );
     }
 
     /**
@@ -107,13 +115,15 @@ class QuoteSetup extends EavSetup
      */
     protected function _addFlatAttribute($table, $attribute, $attr)
     {
-        $tableInfo = $this->getSetup()->getConnection()->describeTable($this->getSetup()->getTable($table));
+        $tableInfo = $this->getSetup()
+            ->getConnection(self::$connectionName)
+            ->describeTable($this->getSetup()->getTable($table, self::$connectionName));
         if (isset($tableInfo[$attribute])) {
             return $this;
         }
         $columnDefinition = $this->_getAttributeColumnDefinition($attribute, $attr);
-        $this->getSetup()->getConnection()->addColumn(
-            $this->getSetup()->getTable($table),
+        $this->getSetup()->getConnection(self::$connectionName)->addColumn(
+            $this->getSetup()->getTable($table, self::$connectionName),
             $attribute,
             $columnDefinition
         );

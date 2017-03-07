@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Sales\Test\Unit\Block\Order;
@@ -23,6 +23,16 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
     protected $orderCollectionFactory;
 
     /**
+     * @var \Magento\Sales\Model\ResourceModel\Order\CollectionFactoryInterface|\PHPUnit_Framework_MockObject_MockObject
+     */
+    private $orderCollectionFactoryInterface;
+
+    /**
+     * @var \Magento\Framework\App\ObjectManager|\PHPUnit_Framework_MockObject_MockObject
+     */
+    private $objectManager;
+
+    /**
      * @var \Magento\Customer\Model\Session|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $customerSession;
@@ -42,12 +52,20 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
      */
     protected $pageTitleMock;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->context = $this->getMock('Magento\Framework\View\Element\Template\Context', [], [], '', false, false);
         $this->orderCollectionFactory =
             $this->getMockBuilder('Magento\Sales\Model\ResourceModel\Order\CollectionFactory')
             ->disableOriginalConstructor()->setMethods(['create'])->getMock();
+        $this->orderCollectionFactoryInterface =
+            $this->getMockBuilder(\Magento\Sales\Model\ResourceModel\Order\CollectionFactoryInterface::class)
+                ->disableOriginalConstructor()->setMethods(['create'])->getMock();
+        $this->objectManager = $this->getMock(\Magento\Framework\ObjectManagerInterface::class, [], [], '', false);
+        $this->objectManager->expects($this->any())
+            ->method('get')
+            ->will($this->returnValue($this->orderCollectionFactoryInterface));
+        \Magento\Framework\App\ObjectManager::setInstance($this->objectManager);
 
         $this->customerSession = $this->getMockBuilder('Magento\Customer\Model\Session')
             ->setMethods(['getCustomerId'])->disableOriginalConstructor()->getMock();
@@ -95,17 +113,13 @@ class HistoryTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnSelf());
         $orderCollection->expects($this->at(1))
             ->method('addFieldToFilter')
-            ->with('customer_id', $this->equalTo($customerId))
-            ->will($this->returnSelf());
-        $orderCollection->expects($this->at(2))
-            ->method('addFieldToFilter')
             ->with('status', $this->equalTo(['in' => $statuses]))
             ->will($this->returnSelf());
-        $orderCollection->expects($this->at(3))
+        $orderCollection->expects($this->at(2))
             ->method('setOrder')
             ->with('created_at', 'desc')
             ->will($this->returnSelf());
-        $this->orderCollectionFactory->expects($this->atLeastOnce())
+        $this->orderCollectionFactoryInterface->expects($this->atLeastOnce())
             ->method('create')
             ->will($this->returnValue($orderCollection));
         $this->pageConfig->expects($this->atLeastOnce())

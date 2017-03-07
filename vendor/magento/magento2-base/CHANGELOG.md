@@ -1,3 +1,11 @@
+2.1.1
+=============
+To get detailed information about changes in Magento 2.1.1, please visit [Magento Community Edition (CE) Release Notes](http://devdocs.magento.com/guides/v2.1/release-notes/ReleaseNotes2.1.1CE.html "Magento Community Edition (CE) Release Notes")
+
+2.1.0
+=============
+To get detailed information about changes in Magento 2.1.0, please visit [Magento Community Edition (CE) Release Notes](http://devdocs.magento.com/guides/v2.1/release-notes/ReleaseNotes2.1.0CE.html "Magento Community Edition (CE) Release Notes")
+
 2.0.0
 =============
 * Fixed bugs:
@@ -2868,7 +2876,7 @@ Tests:
   * Fixed a 404 error after saving mass update product attributes form
   * Fixed an issue when it was impossible to perform search by all tax classes on the Advanced Search page
   * Fixed an issue when attribute order for configurable product was not preserved after saving product
-  * Fixed an issue with no results for the Product Best Sellers report
+  * Fixed an issue with no results for the Product Bestsellers report
   * Fixed a fatal error when opening tax configuration page in the backend
   * Fixed an error occurring when opening the Tax Zones and Rates page in the backend
   * Fixed a 404 error occurring while searching products on the New Review page

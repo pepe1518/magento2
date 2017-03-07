@@ -1,9 +1,12 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\ConfigurableImportExport\Model\Export;
+
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 
 /**
  * @magentoAppArea adminhtml
@@ -33,11 +36,14 @@ class RowCustomizerTest extends \PHPUnit_Framework_TestCase
      */
     public function testPrepareData()
     {
+        $productRepository = Bootstrap::getObjectManager()->create(ProductRepositoryInterface::class);
+        $product = $productRepository->get('configurable');
+
         $collection = $this->objectManager->get('Magento\Catalog\Model\ResourceModel\Product\Collection');
         $select = (string)$collection->getSelect();
-        $this->model->prepareData($collection, [1, 2, 3, 4]);
+        $this->model->prepareData($collection, [$product->getId(), 2, 3, 4]);
         $this->assertEquals($select, (string)$collection->getSelect());
-        $result = $this->model->addData([], 1);
+        $result = $this->model->addData([], $product->getId());
         $this->assertArrayHasKey('configurable_variations', $result);
         $this->assertArrayHasKey('configurable_variation_labels', $result);
         $this->assertEquals(

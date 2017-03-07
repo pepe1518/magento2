@@ -1,1 +1,0 @@
-Magento_SwatchesSampleData module consists of installation scripts.

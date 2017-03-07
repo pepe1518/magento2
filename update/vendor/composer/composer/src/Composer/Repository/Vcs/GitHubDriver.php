@@ -50,6 +50,9 @@ class GitHubDriver extends VcsDriver
         $this->owner = $match[3];
         $this->repository = $match[4];
         $this->originUrl = !empty($match[1]) ? $match[1] : $match[2];
+        if ($this->originUrl === 'www.github.com') {
+            $this->originUrl = 'github.com';
+        }
         $this->cache = new Cache($this->io, $this->config->get('cache-repo-dir').'/'.$this->originUrl.'/'.$this->owner.'/'.$this->repository);
 
         if (isset($this->repoConfig['no-api']) && $this->repoConfig['no-api']) {
@@ -151,9 +154,9 @@ class GitHubDriver extends VcsDriver
             while ($notFoundRetries) {
                 try {
                     $resource = $this->getApiUrl() . '/repos/'.$this->owner.'/'.$this->repository.'/contents/composer.json?ref='.urlencode($identifier);
-                    $composer = JsonFile::parseJson($this->getContents($resource));
-                    if (empty($composer['content']) || $composer['encoding'] !== 'base64' || !($composer = base64_decode($composer['content']))) {
-                        throw new \RuntimeException('Could not retrieve composer.json from '.$resource);
+                    $resource = JsonFile::parseJson($this->getContents($resource));
+                    if (empty($resource['content']) || $resource['encoding'] !== 'base64' || !($composer = base64_decode($resource['content']))) {
+                        throw new \RuntimeException('Could not retrieve composer.json for '.$identifier);
                     }
                     break;
                 } catch (TransportException $e) {
@@ -164,7 +167,7 @@ class GitHubDriver extends VcsDriver
                     // TODO should be removed when possible
                     // retry fetching if github returns a 404 since they happen randomly
                     $notFoundRetries--;
-                    $composer = false;
+                    $composer = null;
                 }
             }
 
@@ -260,14 +263,12 @@ class GitHubDriver extends VcsDriver
         }
 
         $originUrl = !empty($matches[2]) ? $matches[2] : $matches[3];
-        if (!in_array($originUrl, $config->get('github-domains'))) {
+        if (!in_array(preg_replace('{^www\.}i', '', $originUrl), $config->get('github-domains'))) {
             return false;
         }
 
         if (!extension_loaded('openssl')) {
-            if ($io->isVerbose()) {
-                $io->writeError('Skipping GitHub driver for '.$url.' because the OpenSSL PHP extension is missing.');
-            }
+            $io->writeError('Skipping GitHub driver for '.$url.' because the OpenSSL PHP extension is missing.', true, IOInterface::VERBOSE);
 
             return false;
         }

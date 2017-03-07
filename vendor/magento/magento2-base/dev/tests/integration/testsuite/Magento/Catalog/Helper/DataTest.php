@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Catalog\Helper;
@@ -83,6 +83,8 @@ class DataTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @magentoDataFixture Magento/Catalog/_files/categories.php
+     * @magentoDbIsolation enabled
+     * @magentoAppIsolation enabled
      */
     public function testGetBreadcrumbPath()
     {
@@ -255,9 +257,10 @@ class DataTest extends \PHPUnit_Framework_TestCase
         $productClassName = 'DefaultProductClass'
     ) {
         $this->setUpDefaultRules();
-        $fixtureProductId = 1;
+        /** @var \Magento\Catalog\Api\ProductRepositoryInterface $productRepository */
+        $productRepository = $this->objectManager->get('Magento\Catalog\Api\ProductRepositoryInterface');
         /** @var \Magento\Catalog\Model\Product $product */
-        $product = $this->objectManager->create('Magento\Catalog\Model\Product')->load($fixtureProductId);
+        $product = $productRepository->get('simple');
         $product->setTaxClassId($this->taxClasses[$productClassName]);
         $shippingAddress = $this->getCustomerAddress();
         $billingAddress = $shippingAddress;
@@ -394,7 +397,7 @@ class DataTest extends \PHPUnit_Framework_TestCase
             ],
             'price include tax, display excluding tax, high rate product tax class, round' => [
                 (new \Magento\Framework\DataObject())->setPrice(3.256)->setRoundPrice(true),
-                '2.67',
+                '2.97',
                 [
                     [
                         'path' => Config::CONFIG_XML_PATH_PRICE_INCLUDES_TAX,

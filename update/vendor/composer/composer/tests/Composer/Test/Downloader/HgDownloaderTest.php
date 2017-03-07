@@ -13,10 +13,28 @@
 namespace Composer\Test\Downloader;
 
 use Composer\Downloader\HgDownloader;
+use Composer\TestCase;
 use Composer\Util\Filesystem;
+use Composer\Util\Platform;
 
-class HgDownloaderTest extends \PHPUnit_Framework_TestCase
+class HgDownloaderTest extends TestCase
 {
+    /** @var string */
+    private $workingDir;
+
+    protected function setUp()
+    {
+        $this->workingDir = $this->getUniqueTmpDirectory();
+    }
+
+    protected function tearDown()
+    {
+        if (is_dir($this->workingDir)) {
+            $fs = new Filesystem;
+            $fs->removeDirectory($this->workingDir);
+        }
+    }
+
     protected function getDownloaderMock($io = null, $config = null, $executor = null, $filesystem = null)
     {
         $io = $io ?: $this->getMock('Composer\IO\IOInterface');
@@ -85,9 +103,8 @@ class HgDownloaderTest extends \PHPUnit_Framework_TestCase
 
     public function testUpdate()
     {
-        $tmpDir = realpath(sys_get_temp_dir()).DIRECTORY_SEPARATOR.'cmptest-'.md5(uniqid('', true));
         $fs = new Filesystem;
-        $fs->ensureDirectoryExists($tmpDir.'/.hg');
+        $fs->ensureDirectoryExists($this->workingDir.'/.hg');
         $packageMock = $this->getMock('Composer\Package\PackageInterface');
         $packageMock->expects($this->any())
             ->method('getSourceReference')
@@ -109,7 +126,7 @@ class HgDownloaderTest extends \PHPUnit_Framework_TestCase
             ->will($this->returnValue(0));
 
         $downloader = $this->getDownloaderMock(null, null, $processExecutor);
-        $downloader->update($packageMock, $packageMock, $tmpDir);
+        $downloader->update($packageMock, $packageMock, $this->workingDir);
     }
 
     public function testRemove()
@@ -140,10 +157,6 @@ class HgDownloaderTest extends \PHPUnit_Framework_TestCase
 
     private function getCmd($cmd)
     {
-        if (defined('PHP_WINDOWS_VERSION_BUILD')) {
-            return strtr($cmd, "'", '"');
-        }
-
-        return $cmd;
+        return Platform::isWindows() ? strtr($cmd, "'", '"') : $cmd;
     }
 }

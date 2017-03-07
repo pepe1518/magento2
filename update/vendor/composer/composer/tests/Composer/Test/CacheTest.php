@@ -12,8 +12,8 @@
 
 namespace Composer\Test;
 
-use Composer\Cache;
 use Composer\TestCase;
+use Composer\Util\Filesystem;
 
 class CacheTest extends TestCase
 {
@@ -25,15 +25,15 @@ class CacheTest extends TestCase
             $this->markTestSkipped('Test causes intermittent failures on Travis');
         }
 
-        $this->root = sys_get_temp_dir() . '/composer_testdir';
-        $this->ensureDirectoryExistsAndClear($this->root);
-
+        $this->root = $this->getUniqueTmpDirectory();
         $this->files = array();
         $zeros = str_repeat('0', 1000);
+
         for ($i = 0; $i < 4; $i++) {
             file_put_contents("{$this->root}/cached.file{$i}.zip", $zeros);
             $this->files[] = new \SplFileInfo("{$this->root}/cached.file{$i}.zip");
         }
+
         $this->finder = $this->getMockBuilder('Symfony\Component\Finder\Finder')->disableOriginalConstructor()->getMock();
 
         $io = $this->getMock('Composer\IO\IOInterface');
@@ -46,6 +46,14 @@ class CacheTest extends TestCase
             ->expects($this->any())
             ->method('getFinder')
             ->will($this->returnValue($this->finder));
+    }
+
+    protected function tearDown()
+    {
+        if (is_dir($this->root)) {
+            $fs = new Filesystem;
+            $fs->removeDirectory($this->root);
+        }
     }
 
     public function testRemoveOutdatedFiles()

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Theme\Block\Html;
@@ -33,7 +33,7 @@ class FooterTest extends \PHPUnit_Framework_TestCase
             ->createBlock('Magento\Theme\Block\Html\Footer');
         $storeId = $objectManager->get('Magento\Store\Model\StoreManagerInterface')->getStore()->getId();
         $this->assertEquals(
-            ['PAGE_FOOTER', $storeId, 0, $this->_theme->getId(), null],
+            ['PAGE_FOOTER', $storeId, 0, $this->_theme->getId(), false, $block->getTemplateFile(),'template' => null],
             $block->getCacheKeyInfo()
         );
     }

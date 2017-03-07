@@ -1,9 +1,15 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+/**
+ * Create multiselect attribute
+ */
 require __DIR__ . '/multiselect_attribute.php';
+
+/** Create product with options and multiselect attribute */
 
 /** @var $installer \Magento\Catalog\Setup\CategorySetup */
 $installer = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()->create('Magento\Catalog\Setup\CategorySetup');
@@ -59,7 +65,7 @@ $product->setTypeId(
 )->setVisibility(
     \Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH
 )->setMultiselectAttribute(
-    [$optionIds[1], $optionIds[2]]
+    [$optionIds[1], $optionIds[2], $optionIds[3]]
 )->setStatus(
     \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED
 )->setStockData(

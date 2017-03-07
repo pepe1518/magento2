@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -77,6 +77,11 @@ class Import extends \Magento\ImportExport\Model\AbstractModel
      * Import multiple value separator.
      */
     const FIELD_FIELD_MULTIPLE_VALUE_SEPARATOR = '_import_multiple_value_separator';
+
+    /**
+     * Allow multiple values wrapping in double quotes for additional attributes.
+     */
+    const FIELDS_ENCLOSURE = 'fields_enclosure';
 
     /**#@-*/
 
@@ -280,11 +285,11 @@ class Import extends \Magento\ImportExport\Model\AbstractModel
         $messages = [];
         if ($this->getProcessedRowsCount()) {
             if ($validationResult->getErrorsCount()) {
-                $messages[] = __('Data validation is failed. Please fix errors and re-upload the file.');
+                $messages[] = __('Data validation failed. Please fix the following errors and upload the file again.');
 
                 // errors info
                 foreach ($validationResult->getRowsGroupedByErrorCode() as $errorMessage => $rows) {
-                    $error = $errorMessage . ' ' . __('in rows') . ': ' . implode(', ', $rows);
+                    $error = $errorMessage . ' ' . __('in row(s)') . ': ' . implode(', ', $rows);
                     $messages[] = $error;
                 }
             } else {

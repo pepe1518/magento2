@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Eav\Model\Entity;
@@ -8,6 +8,7 @@ namespace Magento\Eav\Model\Entity;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Stdlib\DateTime\DateTimeFormatterInterface;
+use Magento\Framework\App\ObjectManager;
 
 /**
  * EAV Entity attribute model
@@ -35,6 +36,11 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
      * @var string
      */
     protected $_eventPrefix = 'eav_entity_attribute';
+
+    /**
+     * @var AttributeCache
+     */
+    private $attributeCache;
 
     /**
      * Parameter name in event
@@ -69,6 +75,11 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
      * @var DateTimeFormatterInterface
      */
     protected $dateTimeFormatter;
+
+    /**
+     * @var \Magento\Framework\Intl\NumberFormatterFactory
+     */
+    private $numberFormatterFactory;
 
     /**
      * @param \Magento\Framework\Model\Context $context
@@ -211,6 +222,23 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
     }
 
     /**
+     * Get number formatter factory
+     *
+     * @return \Magento\Framework\Intl\NumberFormatterFactory
+     *
+     * @deprecated
+     */
+    private function getNumberFormatterFactory()
+    {
+        if ($this->numberFormatterFactory === null) {
+            $this->numberFormatterFactory = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                \Magento\Framework\Intl\NumberFormatterFactory::class
+            );
+        }
+        return $this->numberFormatterFactory;
+    }
+
+    /**
      * Prepare data for save
      *
      * @return $this
@@ -250,7 +278,8 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
         $hasDefaultValue = (string)$defaultValue != '';
 
         if ($this->getBackendType() == 'decimal' && $hasDefaultValue) {
-            $numberFormatter = new \NumberFormatter($this->_localeResolver->getLocale(), \NumberFormatter::DECIMAL);
+            $numberFormatter = $this->getNumberFormatterFactory()
+                ->create($this->_localeResolver->getLocale(), \NumberFormatter::DECIMAL);
             $defaultValue = $numberFormatter->parse($defaultValue);
             if ($defaultValue === false) {
                 throw new LocalizedException(__('Invalid default decimal value'));
@@ -298,7 +327,30 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
     public function afterSave()
     {
         $this->_getResource()->saveInSetIncluding($this);
+        $this->getAttributeCache()->clear();
         return parent::afterSave();
+    }
+
+    /**
+     * @return $this
+     */
+    public function afterDelete()
+    {
+        $this->getAttributeCache()->clear();
+        return parent::afterDelete();
+    }
+
+    /**
+     * Attribute cache
+     *
+     * @return AttributeCache
+     */
+    private function getAttributeCache()
+    {
+        if (!$this->attributeCache) {
+            $this->attributeCache = ObjectManager::getInstance()->get(AttributeCache::class);
+        }
+        return $this->attributeCache;
     }
 
     /**
@@ -462,5 +514,30 @@ class Attribute extends \Magento\Eav\Model\Entity\Attribute\AbstractAttribute im
     public function getIdentities()
     {
         return [self::CACHE_TAG . '_' . $this->getId()];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __sleep()
+    {
+        $this->unsetData('attribute_set_info');
+        return array_diff(
+            parent::__sleep(),
+            ['_localeDate', '_localeResolver', 'reservedAttributeList', 'dateTimeFormatter']
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function __wakeup()
+    {
+        parent::__wakeup();
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $this->_localeDate = $objectManager->get(\Magento\Framework\Stdlib\DateTime\TimezoneInterface::class);
+        $this->_localeResolver = $objectManager->get(\Magento\Framework\Locale\ResolverInterface::class);
+        $this->reservedAttributeList = $objectManager->get(\Magento\Catalog\Model\Product\ReservedAttributeList::class);
+        $this->dateTimeFormatter = $objectManager->get(DateTimeFormatterInterface::class);
     }
 }

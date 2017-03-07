@@ -4,7 +4,7 @@
  *
  * PHP Version 5
  *
- * Copyright (c) 2008-2013, Manuel Pichler <mapi@pdepend.org>.
+ * Copyright (c) 2008-2015, Manuel Pichler <mapi@pdepend.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @copyright 2008-2013 Manuel Pichler. All rights reserved.
- * @license   http://www.opensource.org/licenses/bsd-license.php BSD License
+ * @copyright 2008-2015 Manuel Pichler. All rights reserved.
+ * @license http://www.opensource.org/licenses/bsd-license.php BSD License
  */
 
 namespace PDepend\Source\AST;
@@ -49,10 +49,10 @@ use PDepend\Util\Cache\CacheDriver;
  *
  * Callable objects is a generic parent for methods and functions.
  *
- * @copyright 2008-2013 Manuel Pichler. All rights reserved.
- * @license   http://www.opensource.org/licenses/bsd-license.php BSD License
+ * @copyright 2008-2015 Manuel Pichler. All rights reserved.
+ * @license http://www.opensource.org/licenses/bsd-license.php BSD License
  */
-abstract class AbstractASTCallable extends AbstractASTArtifact
+abstract class AbstractASTCallable extends AbstractASTArtifact implements ASTCallable
 {
     /**
      * The internal used cache instance.
@@ -140,7 +140,7 @@ abstract class AbstractASTCallable extends AbstractASTArtifact
      * @access private
      * @since  0.9.6
      */
-    public function addChild(\PDepend\Source\AST\ASTNode $node)
+    public function addChild(ASTNode $node)
     {
         $this->nodes[] = $node;
     }
@@ -275,10 +275,26 @@ abstract class AbstractASTCallable extends AbstractASTArtifact
      */
     public function getReturnClass()
     {
-        if ($this->returnClassReference === null) {
-            return null;
+        if ($this->returnClassReference) {
+            return $this->returnClassReference->getType();
         }
-        return $this->returnClassReference->getType();
+        if (($node = $this->getReturnType()) instanceof ASTClassOrInterfaceReference) {
+            return $node->getType();
+        }
+        return null;
+    }
+
+    /**
+     * @return \PDepend\Source\AST\ASTType
+     */
+    public function getReturnType()
+    {
+        foreach ($this->nodes as $node) {
+            if ($node instanceof ASTType) {
+                return $node;
+            }
+        }
+        return null;
     }
 
     /**
@@ -291,9 +307,8 @@ abstract class AbstractASTCallable extends AbstractASTArtifact
      * @return void
      * @since  0.9.5
      */
-    public function setReturnClassReference(
-        \PDepend\Source\AST\ASTClassOrInterfaceReference $classReference
-    ) {
+    public function setReturnClassReference(ASTClassOrInterfaceReference $classReference)
+    {
         $this->returnClassReference = $classReference;
     }
 

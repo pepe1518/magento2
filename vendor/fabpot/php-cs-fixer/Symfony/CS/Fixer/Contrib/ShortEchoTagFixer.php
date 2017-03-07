@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -32,11 +33,23 @@ class ShortEchoTagFixer extends AbstractFixer
             $token = $tokens[$i];
             $nextIndex = $i + 1;
 
-            if (!$token->isGivenKind(T_OPEN_TAG_WITH_ECHO)) {
+            if (
+                !$token->isGivenKind(T_OPEN_TAG_WITH_ECHO)
+                && !(
+                    /*
+                     * HHVM parses '<?=' as T_ECHO instead of T_OPEN_TAG_WITH_ECHO
+                     *
+                     * @see https://github.com/facebook/hhvm/issues/4809
+                     * @see https://github.com/facebook/hhvm/issues/7161
+                     */
+                    defined('HHVM_VERSION')
+                    && $token->equals(array(T_ECHO, '<?='))
+                )
+            ) {
                 continue;
             }
 
-            $token->override(array(T_OPEN_TAG, '<?php ', $token->getLine()));
+            $tokens->overrideAt($i, array(T_OPEN_TAG, '<?php ', $token->getLine()));
 
             if (!$tokens[$nextIndex]->isWhitespace()) {
                 $tokens->insertAt($nextIndex, new Token(array(T_WHITESPACE, ' ')));

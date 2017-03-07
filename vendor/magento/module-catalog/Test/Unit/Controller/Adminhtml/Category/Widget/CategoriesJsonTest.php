@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -56,7 +56,7 @@ class CategoriesJsonTest extends \PHPUnit_Framework_TestCase
      */
     protected $resultJson;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->responseMock = $this->getMock('Magento\Framework\App\Response\Http', [], [], '', false);
         $this->requestMock = $this->getMock('Magento\Framework\App\Request\Http', [], [], '', false);

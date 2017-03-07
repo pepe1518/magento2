@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Setup\Model\Cron;
@@ -62,14 +62,14 @@ class JobUpgrade extends AbstractJob
     public function execute()
     {
         try {
-            $this->params['command'] = 'setup:upgrade';
-            $this->command->run(new ArrayInput($this->params), $this->output);
             $this->queue->addJobs(
                 [['name' => JobFactory::JOB_STATIC_REGENERATE, 'params' => []]]
             );
             $this->queue->addJobs(
                 [['name' => \Magento\Setup\Model\Updater::TASK_TYPE_MAINTENANCE_MODE, 'params' => ['enable' => false]]]
             );
+            $this->params['command'] = 'setup:upgrade';
+            $this->command->run(new ArrayInput($this->params), $this->output);
         } catch (\Exception $e) {
             $this->status->toggleUpdateError(true);
             throw new \RuntimeException(sprintf('Could not complete %s successfully: %s', $this, $e->getMessage()));

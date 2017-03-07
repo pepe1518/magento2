@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -42,16 +42,8 @@ class JobComponentUninstall extends AbstractJob
         Queue $queue = null
     ) {
         parent::__construct($name, $params, $status);
-        $vendorPath = MAGENTO_BP . '/' . (include (MAGENTO_BP . '/app/etc/vendor_path.php'));
-        $composerPath = $vendorPath . '/../composer.json';
-        $composerPath = realpath($composerPath);
         $this->queue = $queue ? $queue : new Queue();
-
-        $this->composerApp = $composerApp ? $composerApp :
-            new MagentoComposerApplication(
-                MAGENTO_BP . '/var/composer_home',
-                $composerPath
-            );
+        $this->composerApp = $composerApp;
     }
 
     /**
@@ -60,7 +52,8 @@ class JobComponentUninstall extends AbstractJob
     public function execute()
     {
         try {
-            $this->status->add('Starting composer remove...');
+            $this->composerApp = $this->composerApp ? : $this->getComposerApp();
+            $this->status->add('Starting composer remove...', \Psr\Log\LogLevel::INFO);
             if (isset($this->params['components'])) {
                 $packages = [];
                 foreach ($this->params['components'] as $compObj) {
@@ -69,13 +62,17 @@ class JobComponentUninstall extends AbstractJob
                 $this->status->add(
                     $this->composerApp->runComposerCommand(
                         ['command' => 'remove', 'packages' => $packages, '--no-update' => true]
-                    )
+                    ),
+                    \Psr\Log\LogLevel::INFO
                 );
             } else {
                 throw new \RuntimeException('Cannot find component to uninstall');
             }
-            $this->status->add($this->composerApp->runComposerCommand(['command' => 'update']));
-            $this->status->add('Composer remove completed successfully');
+            $this->status->add(
+                $this->composerApp->runComposerCommand(['command' => 'update']),
+                \Psr\Log\LogLevel::INFO
+            );
+            $this->status->add('Composer remove completed successfully', \Psr\Log\LogLevel::INFO);
             $this->queue->addJobs(
                 [['name' => \Magento\Update\Queue\JobFactory::NAME_MAINTENANCE_MODE, 'params' => ['enable' => false]]]
             );
@@ -84,5 +81,19 @@ class JobComponentUninstall extends AbstractJob
             throw new \RuntimeException(sprintf('Could not complete %s successfully: %s', $this, $e->getMessage()));
         }
         return $this;
+    }
+
+    /**
+     * Get composer application
+     *
+     * @return MagentoComposerApplication
+     */
+    private function getComposerApp()
+    {
+        $vendorPath = MAGENTO_BP . '/' . (include (MAGENTO_BP . '/app/etc/vendor_path.php'));
+        $composerPath = $vendorPath . '/../composer.json';
+        $composerPath = realpath($composerPath);
+
+        return new MagentoComposerApplication(MAGENTO_BP . '/var/composer_home', $composerPath);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\Test\Unit;
@@ -57,7 +57,7 @@ class TranslateTest extends \PHPUnit_Framework_TestCase
     /** @var \Magento\Framework\Filesystem\Directory\ReadInterface|\PHPUnit_Framework_MockObject_MockObject */
     protected $directory;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->viewDesign = $this->getMock('\Magento\Framework\View\DesignInterface', [], [], '', false);
         $this->cache = $this->getMock('\Magento\Framework\Cache\FrontendInterface', [], [], '', false);
@@ -170,8 +170,9 @@ class TranslateTest extends \PHPUnit_Framework_TestCase
         ];
         $this->resource->expects($this->any())->method('getTranslationArray')->will($this->returnValue($dbData));
 
-        $this->cache->expects($this->exactly(1))
-            ->method('save');
+        if (!$forceReload) {
+            $this->cache->expects($this->exactly(1))->method('save');
+        }
 
         $this->translate->loadData($area, $forceReload);
 

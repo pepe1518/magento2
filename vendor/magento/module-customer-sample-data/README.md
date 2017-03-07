@@ -1,1 +1,0 @@
-Magento_CustomerSampleData module consists of installation scripts and fixtures.

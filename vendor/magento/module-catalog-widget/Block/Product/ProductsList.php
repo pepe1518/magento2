@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -8,12 +8,15 @@
 
 namespace Magento\CatalogWidget\Block\Product;
 
+use Magento\Framework\DataObject\IdentityInterface;
+use Magento\Widget\Block\BlockInterface;
+
 /**
  * Catalog Products List widget block
  * Class ProductsList
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implements \Magento\Widget\Block\BlockInterface
+class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implements BlockInterface, IdentityInterface
 {
     /**
      * Default value for products count that will be shown
@@ -22,6 +25,8 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
 
     /**
      * Name of request parameter for page number value
+     *
+     * @deprecated
      */
     const PAGE_VAR_NAME = 'np';
 
@@ -142,9 +147,10 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
             $this->_storeManager->getStore()->getId(),
             $this->_design->getDesignTheme()->getId(),
             $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_GROUP),
-            intval($this->getRequest()->getParam(self::PAGE_VAR_NAME, 1)),
+            intval($this->getRequest()->getParam($this->getData('page_var_name'), 1)),
             $this->getProductsPerPage(),
-            $conditions
+            $conditions,
+            serialize($this->getRequest()->getParams())
         ];
     }
 
@@ -208,7 +214,7 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
         $collection = $this->_addProductAttributesAndPrices($collection)
             ->addStoreFilter()
             ->setPageSize($this->getPageSize())
-            ->setCurPage($this->getRequest()->getParam(self::PAGE_VAR_NAME, 1));
+            ->setCurPage($this->getRequest()->getParam($this->getData('page_var_name'), 1));
 
         $conditions = $this->getConditions();
         $conditions->collectValidatedAttributes($collection);
@@ -305,7 +311,7 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
                 $this->pager->setUseContainer(true)
                     ->setShowAmounts(true)
                     ->setShowPerPage(false)
-                    ->setPageVarName(self::PAGE_VAR_NAME)
+                    ->setPageVarName($this->getData('page_var_name'))
                     ->setLimit($this->getProductsPerPage())
                     ->setTotalLimit($this->getProductsCount())
                     ->setCollection($this->getProductCollection());
@@ -324,7 +330,16 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
      */
     public function getIdentities()
     {
-        return [\Magento\Catalog\Model\Product::CACHE_TAG];
+        $identities = [];
+        if ($this->getProductCollection()) {
+            foreach ($this->getProductCollection() as $product) {
+                if ($product instanceof IdentityInterface) {
+                    $identities = array_merge($identities, $product->getIdentities());
+                }
+            }
+        }
+
+        return $identities ?: [\Magento\Catalog\Model\Product::CACHE_TAG];
     }
 
     /**

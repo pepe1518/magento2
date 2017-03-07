@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -20,7 +21,7 @@ use Symfony\CS\Utils;
  * Fixer for rules defined in PSR2 ¶3.
  *
  * @author Ceeram <ceeram@cakephp.org>
- * @author Graham Campbell <graham@mineuk.com>
+ * @author Graham Campbell <graham@alt-three.com>
  */
 class SingleLineAfterImportsFixer extends AbstractFixer
 {
@@ -41,35 +42,58 @@ class SingleLineAfterImportsFixer extends AbstractFixer
                 $indent = Utils::calculateTrailingWhitespaceIndent($tokens[$index - 1]);
             }
 
-            $newline = "\n";
+            $semicolonIndex = $tokens->getNextTokenOfKind($index, array(';', array(T_CLOSE_TAG))); // Handle insert index for inline T_COMMENT with whitespace after semicolon
+            $insertIndex = $semicolonIndex;
 
-            // Handle insert index for inline T_COMMENT with whitespace after semicolon
-            $semicolonIndex = $tokens->getNextTokenOfKind($index, array(';', '{'));
-            $insertIndex = $semicolonIndex + 1;
-            if ($tokens[$insertIndex]->isWhitespace(array('whitespaces' => " \t")) && $tokens[$insertIndex + 1]->isComment()) {
-                ++$insertIndex;
+            if ($tokens[$semicolonIndex]->isGivenKind(T_CLOSE_TAG)) {
+                if ($tokens[$insertIndex - 1]->isWhitespace()) {
+                    --$insertIndex;
+                }
+
+                $tokens->insertAt($insertIndex, new Token(';'));
             }
 
-            // Do not add newline after inline T_COMMENT as it is part of T_COMMENT already
-            if ($tokens[$insertIndex]->isGivenKind(T_COMMENT)) {
-                $newline = '';
-            }
-
-            // Increment insert index for inline T_COMMENT or T_DOC_COMMENT
-            if ($tokens[$insertIndex]->isComment()) {
-                ++$insertIndex;
-            }
-
-            $afterSemicolon = $tokens->getNextMeaningfulToken($semicolonIndex);
-            if (!$tokens[$afterSemicolon]->isGivenKind(T_USE)) {
-                $newline .= "\n";
-            }
-
-            if ($tokens[$insertIndex]->isWhitespace()) {
-                $nextToken = $tokens[$insertIndex];
-                $nextToken->setContent($newline.$indent.ltrim($nextToken->getContent()));
+            if ($semicolonIndex === count($tokens) - 1) {
+                $tokens->insertAt($insertIndex + 1, new Token(array(T_WHITESPACE, "\n\n".$indent)));
             } else {
-                $tokens->insertAt($insertIndex, new Token(array(T_WHITESPACE, $newline.$indent)));
+                $newline = "\n";
+                $tokens[$semicolonIndex]->isGivenKind(T_CLOSE_TAG) ? --$insertIndex : ++$insertIndex;
+                if ($tokens[$insertIndex]->isWhitespace(array('whitespaces' => " \t")) && $tokens[$insertIndex + 1]->isComment()) {
+                    ++$insertIndex;
+                }
+
+                // Do not add newline after inline T_COMMENT as it is part of T_COMMENT already
+                // TODO: remove on 2.x line
+                if ($tokens[$insertIndex]->isGivenKind(T_COMMENT) && false !== strpos($tokens[$insertIndex]->getContent(), "\n")) {
+                    $newline = '';
+                }
+
+                // Increment insert index for inline T_COMMENT or T_DOC_COMMENT
+                if ($tokens[$insertIndex]->isComment()) {
+                    ++$insertIndex;
+                }
+
+                $afterSemicolon = $tokens->getNextMeaningfulToken($semicolonIndex);
+                if (null === $afterSemicolon || !$tokens[$afterSemicolon]->isGivenKind(T_USE)) {
+                    $newline .= "\n";
+                }
+
+                if ($tokens[$insertIndex]->isWhitespace()) {
+                    $nextToken = $tokens[$insertIndex];
+                    $nextMeaningfulAfterUseIndex = $tokens->getNextMeaningfulToken($insertIndex);
+                    if (null !== $nextMeaningfulAfterUseIndex && $tokens[$nextMeaningfulAfterUseIndex]->isGivenKind(T_USE)) {
+                        if (substr_count($nextToken->getContent(), "\n") < 2) {
+                            $nextToken->setContent($newline.$indent.ltrim($nextToken->getContent()));
+                        }
+                    } else {
+                        $nextToken->setContent($newline.$indent.ltrim($nextToken->getContent()));
+                    }
+                } else {
+                    // TODO: remove check on 2.x line
+                    if ('' !== $newline.$indent) {
+                        $tokens->insertAt($insertIndex, new Token(array(T_WHITESPACE, $newline.$indent)));
+                    }
+                }
             }
         }
 

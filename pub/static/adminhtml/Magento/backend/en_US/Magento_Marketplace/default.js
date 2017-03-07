@@ -1,1 +1,0 @@
-/var/www/html/magento2/vendor/magento/module-marketplace/view/adminhtml/web/default.js

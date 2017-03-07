@@ -1,3 +1,56 @@
+## 3.7.0
+* Add VenmoAccount
+* Allow order_id and descriptor to be passed in for Transaction submit_for_settlement
+* Add facilitator details onto transactions
+* Add check webhook constant
+
+## 3.6.1
+* Fix PSR-0 style namespacing when using Symfony
+
+## 3.6.0
+* Add support for proxy servers
+* Add PSR-4 namespacing support
+* Add support for AMEX Express Checkout
+* Add support for new fields in dispute webhooks (`dateWon`, `dateOpened`, `kind`)
+* Add transaction data to sucessful subscription webhook
+
+## 3.5.0
+* Add support for raw ApplePay params on Transaction create
+
+## 3.4.0
+* Add sourceDescription method to Android Pay and Apple Pay payment methods
+* Add new Android Pay test nonces
+* Add billing agreement ID to PayPal Account
+* Support amex rewards transactions
+
+## 3.3.0
+* Add new test payment method nonces
+* Allow passing description on PayPal transactions
+* Add methods to change transaction settlement status in sandbox
+* Fix issue where customer with an id of 0 could not be found
+* Add Europe Bank Account functionality
+
+## 3.2.0
+* Add additional search criteria
+
+## 3.1.0
+* Add support for HHVM
+* Validate that configuration is valid before verifying webhooks
+* Make OAuth methods conform more to existing API
+* Expose customer paymentMethods as an attribute
+
+## 3.0.1
+* Add support for Android Pay
+
+## 3.0.0
+* Deprecate PHP 5.2 and 5.3
+* Validate webhook challenge payload
+* Bugfix for calling `__toString()` on objects that contain a `\DateTime`
+
+## 2.40.0
+* Add missing criteria to credit card verification search
+* Bugfix for autoloading files with Composer
+
 ## 2.39.0
 * Add oauth functionality
 * Add 3DS info to the server side

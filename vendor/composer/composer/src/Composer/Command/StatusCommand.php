@@ -19,12 +19,13 @@ use Composer\Downloader\ChangeReportInterface;
 use Composer\Plugin\CommandEvent;
 use Composer\Plugin\PluginEvents;
 use Composer\Script\ScriptEvents;
+use Composer\Downloader\DvcsDownloaderInterface;
 
 /**
  * @author Tiago Ribeiro <tiago.ribeiro@seegno.com>
  * @author Rui Marinho <rui.marinho@seegno.com>
  */
-class StatusCommand extends Command
+class StatusCommand extends BaseCommand
 {
     protected function configure()
     {
@@ -60,25 +61,37 @@ EOT
         $composer->getEventDispatcher()->dispatchScript(ScriptEvents::PRE_STATUS_CMD, true);
 
         $errors = array();
+        $io = $this->getIO();
+        $unpushedChanges = array();
 
         // list packages
-        foreach ($installedRepo->getPackages() as $package) {
+        foreach ($installedRepo->getCanonicalPackages() as $package) {
             $downloader = $dm->getDownloaderForInstalledPackage($package);
 
             if ($downloader instanceof ChangeReportInterface) {
                 $targetDir = $im->getInstallPath($package);
 
+                if (is_link($targetDir)) {
+                    $errors[$targetDir] = $targetDir . ' is a symbolic link.';
+                }
+
                 if ($changes = $downloader->getLocalChanges($package, $targetDir)) {
                     $errors[$targetDir] = $changes;
+                }
+
+                if ($downloader instanceof DvcsDownloaderInterface) {
+                    if ($unpushed = $downloader->getUnpushedChanges($package, $targetDir)) {
+                        $unpushedChanges[$targetDir] = $unpushed;
+                    }
                 }
             }
         }
 
         // output errors/warnings
-        if (!$errors) {
-            $this->getIO()->writeError('<info>No local changes</info>');
-        } else {
-            $this->getIO()->writeError('<error>You have changes in the following dependencies:</error>');
+        if (!$errors && !$unpushedChanges) {
+            $io->writeError('<info>No local changes</info>');
+        } elseif ($errors) {
+            $io->writeError('<error>You have changes in the following dependencies:</error>');
         }
 
         foreach ($errors as $path => $changes) {
@@ -86,20 +99,36 @@ EOT
                 $indentedChanges = implode("\n", array_map(function ($line) {
                     return '    ' . ltrim($line);
                 }, explode("\n", $changes)));
-                $this->getIO()->write('<info>'.$path.'</info>:');
-                $this->getIO()->write($indentedChanges);
+                $io->write('<info>'.$path.'</info>:');
+                $io->write($indentedChanges);
             } else {
-                $this->getIO()->write($path);
+                $io->write($path);
             }
         }
 
-        if ($errors && !$input->getOption('verbose')) {
-            $this->getIO()->writeError('Use --verbose (-v) to see modified files');
+        if ($unpushedChanges) {
+            $io->writeError('<warning>You have unpushed changes on the current branch in the following dependencies:</warning>');
+
+            foreach ($unpushedChanges as $path => $changes) {
+                if ($input->getOption('verbose')) {
+                    $indentedChanges = implode("\n", array_map(function ($line) {
+                        return '    ' . ltrim($line);
+                    }, explode("\n", $changes)));
+                    $io->write('<info>'.$path.'</info>:');
+                    $io->write($indentedChanges);
+                } else {
+                    $io->write($path);
+                }
+            }
+        }
+
+        if (($errors || $unpushedChanges) && !$input->getOption('verbose')) {
+            $io->writeError('Use --verbose (-v) to see a list of files');
         }
 
         // Dispatch post-status-command
         $composer->getEventDispatcher()->dispatchScript(ScriptEvents::POST_STATUS_CMD, true);
 
-        return $errors ? 1 : 0;
+        return ($errors ? 1 : 0) + ($unpushedChanges ? 2 : 0);
     }
 }

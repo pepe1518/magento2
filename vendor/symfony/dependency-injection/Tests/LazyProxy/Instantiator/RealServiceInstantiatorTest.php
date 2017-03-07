@@ -18,8 +18,6 @@ use Symfony\Component\DependencyInjection\LazyProxy\Instantiator\RealServiceInst
  * Tests for {@see \Symfony\Component\DependencyInjection\Instantiator\RealServiceInstantiator}.
  *
  * @author Marco Pivetta <ocramius@gmail.com>
- *
- * @covers \Symfony\Component\DependencyInjection\LazyProxy\Instantiator\RealServiceInstantiator
  */
 class RealServiceInstantiatorTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,7 +25,7 @@ class RealServiceInstantiatorTest extends \PHPUnit_Framework_TestCase
     {
         $instantiator = new RealServiceInstantiator();
         $instance = new \stdClass();
-        $container = $this->getMock('Symfony\Component\DependencyInjection\ContainerInterface');
+        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerInterface')->getMock();
         $callback = function () use ($instance) {
             return $instance;
         };

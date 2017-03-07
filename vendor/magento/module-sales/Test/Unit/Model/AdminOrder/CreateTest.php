@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -13,6 +13,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as ObjectManagerHe
 
 /**
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyFields)
  */
 class CreateTest extends \PHPUnit_Framework_TestCase
 {
@@ -75,6 +76,11 @@ class CreateTest extends \PHPUnit_Framework_TestCase
      * @var \Magento\Customer\Api\AccountManagementInterface|\PHPUnit_Framework_MockObject_MockObject
      */
     protected $accountManagementMock;
+
+    /**
+     * @var \Magento\Framework\Api\DataObjectHelper|\PHPUnit_Framework_MockObject_MockObject
+     */
+    protected $dataObjectHelper;
 
     /**
      * @var \PHPUnit_Framework_MockObject_MockObject
@@ -171,6 +177,9 @@ class CreateTest extends \PHPUnit_Framework_TestCase
             '',
             false
         );
+        $this->dataObjectHelper = $this->getMockBuilder('Magento\Framework\Api\DataObjectHelper')
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $objectManagerHelper = new ObjectManagerHelper($this);
         $this->adminOrderCreate = $objectManagerHelper->getObject(
@@ -195,6 +204,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
                 'customerMapper' => $this->customerMapper,
                 'objectFactory' => $this->objectFactory,
                 'accountManagement' => $this->accountManagementMock,
+                'dataObjectHelper' => $this->dataObjectHelper,
             ]
         );
     }
@@ -233,28 +243,39 @@ class CreateTest extends \PHPUnit_Framework_TestCase
         );
         $customerGroupMock->expects($this->once())->method('getTaxClassId')->will($this->returnValue($taxClassId));
         $customerFormMock = $this->getMock('Magento\Customer\Model\Metadata\Form', [], [], '', false);
-        $customerFormMock->expects($this->any())->method('getAttributes')->will($this->returnValue($attributeMocks));
+        $customerFormMock->expects($this->any())
+            ->method('getAttributes')
+            ->will($this->returnValue([$attributeMocks[1]]));
         $customerFormMock->expects($this->any())->method('extractData')->will($this->returnValue([]));
-        $customerFormMock->expects($this->any())->method('restoreData')->will($this->returnValue([]));
+        $customerFormMock->expects($this->any())->method('restoreData')->will($this->returnValue(['group_id' => 1]));
 
         $customerFormMock->expects($this->any())
             ->method('prepareRequest')
             ->will($this->returnValue($this->getMock('Magento\Framework\App\RequestInterface')));
 
         $customerMock = $this->getMock('Magento\Customer\Api\Data\CustomerInterface', [], [], '', false);
-        $this->customerMapper->expects($this->any())->method('toFlatArray')
-            ->will($this->returnValue(['email' => 'user@example.com', 'group_id' => 1]));
+        $this->customerMapper->expects($this->atLeastOnce())
+            ->method('toFlatArray')
+            ->willReturn(['group_id' => 1]);
+
+
         $quoteMock = $this->getMock('Magento\Quote\Model\Quote', [], [], '', false);
         $quoteMock->expects($this->any())->method('getCustomer')->will($this->returnValue($customerMock));
         $quoteMock->expects($this->once())
             ->method('addData')
             ->with(
             [
-                'customer_email' => $attributes[0][1],
                 'customer_group_id' => $attributes[1][1],
                 'customer_tax_class_id' => $taxClassId
             ]
         );
+        $this->dataObjectHelper->expects($this->once())
+            ->method('populateWithArray')
+            ->with(
+                $customerMock,
+                ['group_id' => 1],
+                '\Magento\Customer\Api\Data\CustomerInterface'
+            );
 
         $this->formFactoryMock->expects($this->any())->method('create')->will($this->returnValue($customerFormMock));
         $this->sessionQuoteMock->expects($this->any())->method('getQuote')->will($this->returnValue($quoteMock));
@@ -264,7 +285,7 @@ class CreateTest extends \PHPUnit_Framework_TestCase
             ->method('getById')
             ->will($this->returnValue($customerGroupMock));
 
-        $this->adminOrderCreate->setAccountData([]);
+        $this->adminOrderCreate->setAccountData(['group_id' => 1]);
     }
 
     public function testUpdateQuoteItemsNotArray()

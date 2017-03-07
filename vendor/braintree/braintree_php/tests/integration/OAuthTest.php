@@ -1,36 +1,90 @@
 <?php
-require_once __DIR__ . '/../TestHelper.php';
+namespace Test\Integration;
 
-class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
+require_once dirname(__DIR__) . '/Setup.php';
+
+use Test;
+use Test\Setup;
+use Braintree;
+
+class OAuthTest extends Setup
 {
-    /**
-    * @expectedException Braintree_Exception_Configuration
-    * @expectedExceptionMessage clientSecret needs to be set.
-    */
-    function testAssertsHasCredentials()
+    public function testCreateTokenFromCode()
     {
-        $gateway = new Braintree_Gateway(array(
-            'clientId' => 'client_id$development$integration_client_id'
-        ));
-        $gateway->oauth()->createTokenFromCode(array(
-            'code' => 'integration_oauth_auth_code_' . rand(0,299)
-        ));
-    }
-
-    function testCreateTokenFromCode()
-    {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => 'client_id$development$integration_client_id',
             'clientSecret' => 'client_secret$development$integration_client_secret'
-        ));
-        $code = Braintree_OAuthTestHelper::createGrant($gateway, array(
+        ]);
+        $code = Test\Braintree\OAuthTestHelper::createGrant($gateway, [
             'merchant_public_id' => 'integration_merchant_id',
             'scope' => 'read_write'
-        ));
-        $result = $gateway->oauth()->createTokenFromCode(array(
+        ]);
+        $result = $gateway->oauth()->createTokenFromCode([
             'code' => $code,
             'scope' => 'read_write',
-        ));
+        ]);
+
+        $this->assertEquals(true, $result->success);
+        $credentials = $result->credentials;
+        $this->assertNotNull($credentials->accessToken);
+        $this->assertNotNull($credentials->refreshToken);
+        $this->assertEquals('bearer', $credentials->tokenType);
+        $this->assertNotNull($credentials->expiresAt);
+    }
+
+    /**
+    * @expectedException Braintree\Exception\Configuration
+    * @expectedExceptionMessage clientSecret needs to be passed to Braintree\Gateway.
+    */
+    public function testAssertsHasCredentials()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id'
+        ]);
+        $gateway->oauth()->createTokenFromCode([
+            'code' => 'integration_oauth_auth_code_' . rand(0,299)
+        ]);
+    }
+
+
+    public function testCreateTokenFromCodeWithMixedCredentials()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id',
+            'clientSecret' => 'client_secret$development$integration_client_secret',
+            'accessToken' => 'access_token$development$integration_merchant_id$f9ac33b3dd',
+        ]);
+        $code = Test\Braintree\OAuthTestHelper::createGrant($gateway, [
+            'merchant_public_id' => 'integration_merchant_id',
+            'scope' => 'read_write'
+        ]);
+        $result = $gateway->oauth()->createTokenFromCode([
+            'code' => $code,
+            'scope' => 'read_write',
+        ]);
+
+        $this->assertEquals(true, $result->success);
+        $credentials = $result->credentials;
+        $this->assertNotNull($credentials->accessToken);
+        $this->assertNotNull($credentials->refreshToken);
+        $this->assertEquals('bearer', $credentials->tokenType);
+        $this->assertNotNull($credentials->expiresAt);
+    }
+
+    public function testCreateTokenFromCode_JsonAPI()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id',
+            'clientSecret' => 'client_secret$development$integration_client_secret'
+        ]);
+        $code = Test\Braintree\OAuthTestHelper::createGrant($gateway, [
+            'merchant_public_id' => 'integration_merchant_id',
+            'scope' => 'read_write'
+        ]);
+        $result = $gateway->oauth()->createTokenFromCode([
+            'code' => $code,
+            'scope' => 'read_write',
+        ]);
 
         $this->assertEquals(true, $result->success);
         $this->assertNotNull($result->accessToken);
@@ -39,62 +93,80 @@ class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
         $this->assertNotNull($result->expiresAt);
     }
 
-    function testCreateTokenFromCodeFail()
+    public function testCreateTokenFromCode_ValidationErrorTest()
     {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => 'client_id$development$integration_client_id',
             'clientSecret' => 'client_secret$development$integration_client_secret'
-        ));
-        $result = $gateway->oauth()->createTokenFromCode(array(
+        ]);
+        $result = $gateway->oauth()->createTokenFromCode([
             'code' => 'bad_code',
             'scope' => 'read_write',
-        ));
+        ]);
+
+        $this->assertEquals(false, $result->success);
+        $errors = $result->errors->forKey('credentials')->onAttribute('code');
+        $this->assertEquals(Braintree\Error\Codes::OAUTH_INVALID_GRANT, $errors[0]->code);
+        $this->assertEquals(1, preg_match('/Invalid grant: code not found/', $result->message));
+    }
+
+    public function testCreateTokenFromCode_OldError()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id',
+            'clientSecret' => 'client_secret$development$integration_client_secret'
+        ]);
+        $result = $gateway->oauth()->createTokenFromCode([
+            'code' => 'bad_code',
+            'scope' => 'read_write',
+        ]);
 
         $this->assertEquals(false, $result->success);
         $this->assertEquals('invalid_grant', $result->error);
         $this->assertEquals('code not found', $result->errorDescription);
     }
 
-    function testCreateTokenFromRefreshToken()
+    public function testCreateTokenFromRefreshToken()
     {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => 'client_id$development$integration_client_id',
             'clientSecret' => 'client_secret$development$integration_client_secret'
-        ));
-        $code = Braintree_OAuthTestHelper::createGrant($gateway, array(
+        ]);
+        $code = Test\Braintree\OAuthTestHelper::createGrant($gateway, [
             'merchant_public_id' => 'integration_merchant_id',
             'scope' => 'read_write'
-        ));
-        $refreshToken = $gateway->oauth()->createTokenFromCode(array(
+        ]);
+        $refreshToken = $gateway->oauth()->createTokenFromCode([
             'code' => $code,
             'scope' => 'read_write',
-        ))->refreshToken;
+        ])->credentials->refreshToken;
 
-        $result = $gateway->oauth()->createTokenFromRefreshToken(array(
+        $result = $gateway->oauth()->createTokenFromRefreshToken([
             'refreshToken' => $refreshToken,
             'scope' => 'read_write',
-        ));
+        ]);
 
         $this->assertEquals(true, $result->success);
-        $this->assertNotNull($result->accessToken);
-        $this->assertNotNull($result->refreshToken);
-        $this->assertEquals('bearer', $result->tokenType);
-        $this->assertNotNull($result->expiresAt);
+        $credentials = $result->credentials;
+        $this->assertNotNull($credentials->accessToken);
+        $this->assertNotNull($credentials->refreshToken);
+        $this->assertEquals('bearer', $credentials->tokenType);
+        $this->assertNotNull($credentials->expiresAt);
     }
 
 
-    function testBuildConnectUrl()
+    public function testBuildConnectUrl()
     {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => 'client_id$development$integration_client_id',
             'clientSecret' => 'client_secret$development$integration_client_secret'
-        ));
-        $url = $gateway->oauth()->connectUrl(array(
+        ]);
+        $url = $gateway->oauth()->connectUrl([
             'merchantId' => 'integration_merchant_id',
             'redirectUri' => 'http://bar.example.com',
             'scope' => 'read_write',
             'state' => 'baz_state',
-            'user' => array(
+            'user' => [
                 'country' => 'USA',
                 'email' => 'foo@example.com',
                 'firstName' => 'Bob',
@@ -107,8 +179,8 @@ class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
                 'locality' => 'Chicago',
                 'region' => 'IL',
                 'postalCode' => '60606',
-            ),
-            'business' => array(
+            ],
+            'business' => [
                 'name' => '14 Ladders',
                 'registeredAs' => '14.0 Ladders',
                 'industry' => 'Ladders',
@@ -125,8 +197,9 @@ class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
                 'fulfillmentCompletedIn' => 7,
                 'currency' => 'USD',
                 'website' => 'http://example.com',
-            ),
-        ));
+            ],
+            'paymentMethods' => ['credit_card'],
+        ]);
 
         $components = parse_url($url);
         $queryString = $components['query'];
@@ -169,28 +242,20 @@ class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(7, $query['business']['fulfillment_completed_in']);
         $this->assertEquals('USD', $query['business']['currency']);
         $this->assertEquals('http://example.com', $query['business']['website']);
-        $this->assertEquals('1559ba26eee1ace1895c7bba78ecfdb5dede82306b0c579cd2b6ab79c3f651c8', $query['signature']);
+
+        $this->assertCount(1, $query['payment_methods']);
+        $this->assertEquals('credit_card', $query['payment_methods'][0]);
+
+        $this->assertEquals(64, strlen($query['signature']));
         $this->assertEquals('SHA256', $query['algorithm']);
-
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_TIMEOUT, 60);
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'GET');
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_ENCODING, 'gzip');
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_exec($curl);
-        $responseStatus = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-
-        $this->assertEquals(302, $responseStatus);
     }
 
-    function testBuildConnectUrlWithoutOptionalParams()
+    public function testBuildConnectUrlWithoutOptionalParams()
     {
-        $gateway = new Braintree_Gateway(array(
+        $gateway = new Braintree\Gateway([
             'clientId' => 'client_id$development$integration_client_id',
             'clientSecret' => 'client_secret$development$integration_client_secret'
-        ));
+        ]);
         $url = $gateway->oauth()->connectUrl();
 
         $queryString = parse_url($url)['query'];
@@ -200,5 +265,34 @@ class Braintree_OAuthTest extends PHPUnit_Framework_TestCase
         $this->assertArrayNotHasKey('merchant_id', $query);
         $this->assertArrayNotHasKey('redirect_uri', $query);
         $this->assertArrayNotHasKey('scope', $query);
+    }
+
+    public function testBuildConnectUrlWithPaymentMethods()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id',
+            'clientSecret' => 'client_secret$development$integration_client_secret'
+        ]);
+        $url = $gateway->oauth()->connectUrl([
+            'paymentMethods' => ['credit_card', 'paypal']
+        ]);
+
+        $queryString = parse_url($url)['query'];
+        parse_str($queryString, $query);
+
+        $this->assertEquals(['credit_card', 'paypal'], $query['payment_methods']);
+    }
+
+    public function testComputeSignature()
+    {
+        $gateway = new Braintree\Gateway([
+            'clientId' => 'client_id$development$integration_client_id',
+            'clientSecret' => 'client_secret$development$integration_client_secret'
+        ]);
+        $urlToSign = 'http://localhost:3000/oauth/connect?business%5Bname%5D=We+Like+Spaces&client_id=client_id%24development%24integration_client_id';
+
+        $signature = $gateway->oauth()->computeSignature($urlToSign);
+
+        $this->assertEquals("a36bcf10dd982e2e47e0d6a2cb930aea47ade73f954b7d59c58dae6167894d41", $signature);
     }
 }

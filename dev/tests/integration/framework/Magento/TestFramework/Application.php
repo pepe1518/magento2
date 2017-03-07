@@ -1,17 +1,16 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\TestFramework;
 
 use Magento\Framework\Autoload\AutoloaderInterface;
-use Magento\Framework\Filesystem;
-use Magento\Framework\Filesystem\DriverInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Config\ConfigOptionsListConstants;
 use Magento\Framework\App\DeploymentConfig\Reader;
+use Magento\Framework\Filesystem\Glob;
 
 /**
  * Encapsulates application installation, initialization and uninstall
@@ -426,7 +425,7 @@ class Application
          * @see \Magento\Setup\Mvc\Bootstrap\InitParamListener::BOOTSTRAP_PARAM
          */
         $this->_shell->execute(
-            'php -f %s setup:uninstall -n --magento-init-params=%s',
+            PHP_BINARY . ' -f %s setup:uninstall -vvv -n --magento-init-params=%s',
             [BP . '/bin/magento', $this->getInitParamsQuery()]
         );
     }
@@ -459,15 +458,18 @@ class Application
 
         // run install script
         $this->_shell->execute(
-            'php -f %s setup:install ' . implode(' ', array_keys($installParams)),
+            PHP_BINARY . ' -f %s setup:install -vvv ' . implode(' ', array_keys($installParams)),
             array_merge([BP . '/bin/magento'], array_values($installParams))
         );
 
         // enable only specified list of caches
         $initParamsQuery = $this->getInitParamsQuery();
-        $this->_shell->execute('php -f %s cache:disable --bootstrap=%s', [BP . '/bin/magento', $initParamsQuery]);
         $this->_shell->execute(
-            'php -f %s cache:enable %s %s %s %s --bootstrap=%s',
+            PHP_BINARY . ' -f %s cache:disable -vvv --bootstrap=%s',
+            [BP . '/bin/magento', $initParamsQuery]
+        );
+        $this->_shell->execute(
+            PHP_BINARY . ' -f %s cache:enable -vvv %s %s %s %s --bootstrap=%s',
             [
                 BP . '/bin/magento',
                 \Magento\Framework\App\Cache\Type\Config::TYPE_IDENTIFIER,
@@ -491,9 +493,9 @@ class Application
      */
     private function copyAppConfigFiles()
     {
-        $globalConfigFiles = glob(
-            $this->_globalConfigDir . '/{di.xml,vendor_path.php}',
-            GLOB_BRACE
+        $globalConfigFiles = Glob::glob(
+            $this->_globalConfigDir . '/{di.xml,*/di.xml,vendor_path.php}',
+            Glob::GLOB_BRACE
         );
         foreach ($globalConfigFiles as $file) {
             $targetFile = $this->_configDir . str_replace($this->_globalConfigDir, '', $file);
@@ -555,7 +557,6 @@ class Application
         /** @var $objectManager \Magento\TestFramework\ObjectManager */
         $objectManager = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
         $objectManager->clearCache();
-
         \Magento\Framework\Data\Form::setElementRenderer(null);
         \Magento\Framework\Data\Form::setFieldsetRenderer(null);
         \Magento\Framework\Data\Form::setFieldsetElementRenderer(null);
@@ -573,7 +574,7 @@ class Application
     {
         if (!file_exists($dir)) {
             $old = umask(0);
-            mkdir($dir, DriverInterface::WRITEABLE_DIRECTORY_MODE);
+            mkdir($dir);
             umask($old);
         } elseif (!is_dir($dir)) {
             throw new \Magento\Framework\Exception\LocalizedException(__("'%1' is not a directory.", $dir));

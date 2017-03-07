@@ -61,7 +61,6 @@ class Installer extends LibraryInstaller implements InstallerInterface
      */
     protected $_deployStrategy = "copy";
 
-
     const MAGENTO_REMOVE_DEV_FLAG = 'magento-remove-dev';
     const MAGENTO_MAINTANANCE_FLAG = 'maintenance.flag';
     const MAGENTO_CACHE_PATH = 'var/cache';
@@ -176,6 +175,10 @@ class Installer extends LibraryInstaller implements InstallerInterface
             $this->isForced = (bool)$extra['magento-force'];
         }
 
+        if (false !== getenv('MAGENTO_CLOUD_PROJECT')) {
+            $this->setDeployStrategy('none');
+        }
+
         if (isset($extra['magento-deploystrategy'])) {
             $this->setDeployStrategy((string)$extra['magento-deploystrategy']);
         }
@@ -187,7 +190,6 @@ class Installer extends LibraryInstaller implements InstallerInterface
         if (!empty($extra['path-mapping-translations'])) {
             $this->_pathMappingTranslations = (array)$extra['path-mapping-translations'];
         }
-
     }
 
 
@@ -421,7 +423,6 @@ class Installer extends LibraryInstaller implements InstallerInterface
         if ($this->appendGitIgnore) {
             $this->appendGitIgnore($package, $this->getGitIgnoreFileLocation());
         }
-
     }
 
     /**
@@ -608,7 +609,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
         if ($this->hasExtraMap($initial)) {
             $initialStrategy = $this->getDeployStrategy($initial);
             $initialStrategy->setMappings($this->getParser($initial)->getMappings());
-            $initialStrategy->clean();
+            try {
+                $initialStrategy->clean();
+            } catch (\ErrorException $e) {
+                if ($this->io->isDebug()) {
+                    $this->io->write($e->getMessage());
+                }
+            }
         }
 
         parent::update($repo, $initial, $target);
@@ -715,7 +722,13 @@ class Installer extends LibraryInstaller implements InstallerInterface
 
         $strategy = $this->getDeployStrategy($package);
         $strategy->setMappings($this->getParser($package)->getMappings());
-        $strategy->clean();
+        try {
+            $strategy->clean();
+        } catch (\ErrorException $e) {
+            if ($this->io->isDebug()) {
+                $this->io->write($e->getMessage());
+            }
+        }
 
         parent::uninstall($repo, $package);
     }

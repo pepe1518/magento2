@@ -13,16 +13,21 @@
 namespace Composer\Test\Downloader;
 
 use Composer\Downloader\PearPackageExtractor;
+use Composer\TestCase;
 
-class PearPackageExtractorTest extends \PHPUnit_Framework_TestCase
+class PearPackageExtractorTest extends TestCase
 {
     public function testShouldExtractPackage_1_0()
     {
+        $state = libxml_disable_entity_loader(true);
+
         $extractor = $this->getMockForAbstractClass('Composer\Downloader\PearPackageExtractor', array(), '', false);
         $method = new \ReflectionMethod($extractor, 'buildCopyActions');
         $method->setAccessible(true);
 
         $fileActions = $method->invoke($extractor, __DIR__ . '/Fixtures/Package_v1.0', array('php' => '/'), array());
+
+        libxml_disable_entity_loader($state);
 
         $expectedFileActions = array(
             'Gtk.php' => array(
@@ -42,18 +47,22 @@ class PearPackageExtractorTest extends \PHPUnit_Framework_TestCase
                 'to' => 'PEAR/Frontend/Gtk/xpm/black_close_icon.xpm',
                 'role' => 'php',
                 'tasks' => array(),
-            )
+            ),
         );
         $this->assertSame($expectedFileActions, $fileActions);
     }
 
     public function testShouldExtractPackage_2_0()
     {
+        $state = libxml_disable_entity_loader(true);
+
         $extractor = $this->getMockForAbstractClass('Composer\Downloader\PearPackageExtractor', array(), '', false);
         $method = new \ReflectionMethod($extractor, 'buildCopyActions');
         $method->setAccessible(true);
 
         $fileActions = $method->invoke($extractor, __DIR__ . '/Fixtures/Package_v2.0', array('php' => '/'), array());
+
+        libxml_disable_entity_loader($state);
 
         $expectedFileActions = array(
             'URL.php' => array(
@@ -61,18 +70,22 @@ class PearPackageExtractorTest extends \PHPUnit_Framework_TestCase
                 'to' => 'Net/URL.php',
                 'role' => 'php',
                 'tasks' => array(),
-            )
+            ),
         );
         $this->assertSame($expectedFileActions, $fileActions);
     }
 
     public function testShouldExtractPackage_2_1()
     {
+        $state = libxml_disable_entity_loader(true);
+
         $extractor = $this->getMockForAbstractClass('Composer\Downloader\PearPackageExtractor', array(), '', false);
         $method = new \ReflectionMethod($extractor, 'buildCopyActions');
         $method->setAccessible(true);
 
         $fileActions = $method->invoke($extractor, __DIR__ . '/Fixtures/Package_v2.1', array('php' => '/', 'script' => '/bin'), array());
+
+        libxml_disable_entity_loader($state);
 
         $expectedFileActions = array(
             'php/Zend/Authentication/Storage/StorageInterface.php' => array(
@@ -87,16 +100,16 @@ class PearPackageExtractorTest extends \PHPUnit_Framework_TestCase
                 'role' => 'php',
                 'tasks' => array(),
             ),
-            'php/Test.php' => array (
+            'php/Test.php' => array(
                 'from' => 'Zend_Authentication-2.0.0beta4/php/Test.php',
                 'to' => '/php/Test.php',
                 'role' => 'script',
-                'tasks' => array (
-                    array (
+                'tasks' => array(
+                    array(
                         'from' => '@version@',
                         'to' => 'version',
-                    )
-                )
+                    ),
+                ),
             ),
             'renamedFile.php' => array(
                 'from' => 'Zend_Authentication-2.0.0beta4/renamedFile.php',
@@ -110,7 +123,7 @@ class PearPackageExtractorTest extends \PHPUnit_Framework_TestCase
 
     public function testShouldPerformReplacements()
     {
-        $from = tempnam(sys_get_temp_dir(), 'pear-extract');
+        $from = tempnam($this->getUniqueTmpDirectory(), 'pear-extract');
         $to = $from.'-to';
 
         $original = 'replaced: @placeholder@; not replaced: @another@; replaced again: @placeholder@';

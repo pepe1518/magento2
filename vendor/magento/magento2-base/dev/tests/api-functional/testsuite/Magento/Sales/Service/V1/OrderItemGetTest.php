@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Sales\Service\V1;
@@ -53,6 +53,14 @@ class OrderItemGetTest extends WebapiAbstract
 
         $this->assertTrue(is_array($response));
         $this->assertOrderItem($orderItem, $response);
+
+        //check that nullable fields were marked as optional and were not sent
+        foreach ($response as $fieldName => $value) {
+            if ($fieldName == 'sku') {
+                continue;
+            }
+            $this->assertNotNull($value);
+        }
     }
 
     /**

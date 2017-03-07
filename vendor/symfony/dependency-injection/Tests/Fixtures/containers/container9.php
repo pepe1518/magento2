@@ -28,12 +28,11 @@ $container
 $container
     ->register('bar', 'Bar\FooClass')
     ->setArguments(array('foo', new Reference('foo.baz'), new Parameter('foo_bar')))
-    ->setScope('container')
     ->setConfigurator(array(new Reference('foo.baz'), 'configure'))
 ;
 $container
     ->register('foo_bar', '%foo_class%')
-    ->setScope('prototype')
+    ->setShared(false)
 ;
 $container->getParameterBag()->clear();
 $container->getParameterBag()->add(array(
@@ -50,7 +49,7 @@ $container
     ->addMethodCall('setBar', array(new Reference('foo2', ContainerInterface::NULL_ON_INVALID_REFERENCE)))
     ->addMethodCall('setBar', array(new Reference('foo3', ContainerInterface::IGNORE_ON_INVALID_REFERENCE)))
     ->addMethodCall('setBar', array(new Reference('foobaz', ContainerInterface::IGNORE_ON_INVALID_REFERENCE)))
-    ->addMethodCall('setBar', array(new Expression('service("foo").foo() ~ (container.hasparameter("foo") ? parameter("foo") : "default")')))
+    ->addMethodCall('setBar', array(new Expression('service("foo").foo() ~ (container.hasParameter("foo") ? parameter("foo") : "default")')))
 ;
 $container
     ->register('foo_with_inline', 'Foo')
@@ -91,9 +90,12 @@ $container
     ->setDecoratedService('decorated', 'decorated.pif-pouf')
 ;
 $container
+    ->register('deprecated_service', 'stdClass')
+    ->setDeprecated(true)
+;
+$container
     ->register('new_factory', 'FactoryClass')
     ->setProperty('foo', 'bar')
-    ->setScope('container')
     ->setPublic(false)
 ;
 $container

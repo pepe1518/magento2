@@ -14,9 +14,9 @@ namespace Composer\Downloader;
 
 use Composer\Config;
 use Composer\Cache;
+use Composer\Factory;
 use Composer\IO\IOInterface;
 use Composer\Package\PackageInterface;
-use Composer\Package\Version\VersionParser;
 use Composer\Plugin\PluginEvents;
 use Composer\Plugin\PreFileDownloadEvent;
 use Composer\EventDispatcher\EventDispatcher;
@@ -39,6 +39,8 @@ class FileDownloader implements DownloaderInterface
     protected $filesystem;
     protected $cache;
     protected $outputProgress = true;
+    private $lastCacheWrites = array();
+    private $eventDispatcher;
 
     /**
      * Constructor.
@@ -55,7 +57,7 @@ class FileDownloader implements DownloaderInterface
         $this->io = $io;
         $this->config = $config;
         $this->eventDispatcher = $eventDispatcher;
-        $this->rfs = $rfs ?: new RemoteFilesystem($io, $config);
+        $this->rfs = $rfs ?: Factory::createRemoteFilesystem($this->io, $config);
         $this->filesystem = $filesystem ?: new Filesystem();
         $this->cache = $cache;
 
@@ -81,7 +83,7 @@ class FileDownloader implements DownloaderInterface
             throw new \InvalidArgumentException('The given package is missing url information');
         }
 
-        $this->io->writeError("  - Installing <info>" . $package->getName() . "</info> (<comment>" . VersionParser::formatVersion($package) . "</comment>)");
+        $this->io->writeError("  - Installing <info>" . $package->getName() . "</info> (<comment>" . $package->getFullPrettyVersion() . "</comment>)");
 
         $urls = $package->getDistUrls();
         while ($url = array_shift($urls)) {
@@ -122,7 +124,7 @@ class FileDownloader implements DownloaderInterface
 
         try {
             $checksum = $package->getDistSha1Checksum();
-            $cacheKey = $this->getCacheKey($package);
+            $cacheKey = $this->getCacheKey($package, $processedUrl);
 
             // download if we don't have it in cache or the cache is invalidated
             if (!$this->cache || ($checksum && $checksum !== $this->cache->sha1($cacheKey)) || !$this->cache->copyTo($cacheKey, $fileName)) {
@@ -138,17 +140,16 @@ class FileDownloader implements DownloaderInterface
                         break;
                     } catch (TransportException $e) {
                         // if we got an http response with a proper code, then requesting again will probably not help, abort
-                        if ((0 !== $e->getCode() && !in_array($e->getCode(),array(500, 502, 503, 504))) || !$retries) {
+                        if ((0 !== $e->getCode() && !in_array($e->getCode(), array(500, 502, 503, 504))) || !$retries) {
                             throw $e;
                         }
-                        if ($this->io->isVerbose()) {
-                            $this->io->writeError('    Download failed, retrying...');
-                        }
+                        $this->io->writeError('    Download failed, retrying...', true, IOInterface::VERBOSE);
                         usleep(500000);
                     }
                 }
 
                 if ($this->cache) {
+                    $this->lastCacheWrites[$package->getName()] = $cacheKey;
                     $this->cache->copyFrom($cacheKey, $fileName);
                 }
             } else {
@@ -166,7 +167,7 @@ class FileDownloader implements DownloaderInterface
         } catch (\Exception $e) {
             // clean up
             $this->filesystem->removeDirectory($path);
-            $this->clearCache($package, $path);
+            $this->clearLastCacheWrite($package);
             throw $e;
         }
 
@@ -183,11 +184,11 @@ class FileDownloader implements DownloaderInterface
         return $this;
     }
 
-    protected function clearCache(PackageInterface $package, $path)
+    protected function clearLastCacheWrite(PackageInterface $package)
     {
-        if ($this->cache) {
-            $fileName = $this->getFileName($package, $path);
-            $this->cache->remove($this->getCacheKey($package));
+        if ($this->cache && isset($this->lastCacheWrites[$package->getName()])) {
+            $this->cache->remove($this->lastCacheWrites[$package->getName()]);
+            unset($this->lastCacheWrites[$package->getName()]);
         }
     }
 
@@ -205,7 +206,7 @@ class FileDownloader implements DownloaderInterface
      */
     public function remove(PackageInterface $package, $path)
     {
-        $this->io->writeError("  - Removing <info>" . $package->getName() . "</info> (<comment>" . VersionParser::formatVersion($package) . "</comment>)");
+        $this->io->writeError("  - Removing <info>" . $package->getName() . "</info> (<comment>" . $package->getFullPrettyVersion() . "</comment>)");
         if (!$this->filesystem->removeDirectory($path)) {
             throw new \RuntimeException('Could not completely delete '.$path.', aborting.');
         }
@@ -226,11 +227,10 @@ class FileDownloader implements DownloaderInterface
     /**
      * Process the download url
      *
-     * @param  PackageInterface $package package the url is coming from
-     * @param  string           $url     download url
-     * @return string           url
-     *
+     * @param  PackageInterface  $package package the url is coming from
+     * @param  string            $url     download url
      * @throws \RuntimeException If any problem with the url
+     * @return string            url
      */
     protected function processUrl(PackageInterface $package, $url)
     {
@@ -241,12 +241,14 @@ class FileDownloader implements DownloaderInterface
         return $url;
     }
 
-    private function getCacheKey(PackageInterface $package)
+    private function getCacheKey(PackageInterface $package, $processedUrl)
     {
-        if (preg_match('{^[a-f0-9]{40}$}', $package->getDistReference())) {
-            return $package->getName().'/'.$package->getDistReference().'.'.$package->getDistType();
-        }
+        // we use the complete download url here to avoid conflicting entries
+        // from different packages, which would potentially allow a given package
+        // in a third party repo to pre-populate the cache for the same package in
+        // packagist for example.
+        $cacheKey = sha1($processedUrl);
 
-        return $package->getName().'/'.$package->getVersion().'-'.$package->getDistReference().'.'.$package->getDistType();
+        return $package->getName().'/'.$cacheKey.'.'.$package->getDistType();
     }
 }

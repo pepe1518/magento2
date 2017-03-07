@@ -6,10 +6,19 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Symfony\\Component\\Yaml\\' => array($vendorDir . '/symfony/yaml'),
     'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
     'Symfony\\Component\\Finder\\' => array($vendorDir . '/symfony/finder'),
+    'Symfony\\Component\\Filesystem\\' => array($vendorDir . '/symfony/filesystem'),
+    'Seld\\PharUtils\\' => array($vendorDir . '/seld/phar-utils/src'),
     'Seld\\JsonLint\\' => array($vendorDir . '/seld/jsonlint/src/Seld/JsonLint'),
+    'Seld\\CliPrompt\\' => array($vendorDir . '/seld/cli-prompt/src'),
+    'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
     'Magento\\Composer\\' => array($vendorDir . '/magento/composer/src'),
     'Magento\\' => array($baseDir . '/app/code/Magento'),
     'JsonSchema\\' => array($vendorDir . '/justinrainbow/json-schema/src/JsonSchema'),
+    'Doctrine\\Instantiator\\' => array($vendorDir . '/doctrine/instantiator/src/Doctrine/Instantiator'),
+    'Composer\\Spdx\\' => array($vendorDir . '/composer/spdx-licenses/src'),
+    'Composer\\Semver\\' => array($vendorDir . '/composer/semver/src'),
+    'Composer\\' => array($vendorDir . '/composer/composer/src/Composer'),
 );

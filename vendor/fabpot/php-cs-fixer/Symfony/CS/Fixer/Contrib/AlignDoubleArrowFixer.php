@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -17,7 +18,7 @@ use Symfony\CS\Tokenizer\Tokens;
 /**
  * @author Carlos Cirello <carlos.cirello.nl@gmail.com>
  * @author Dariusz Rumiński <dariusz.ruminski@gmail.com>
- * @author Graham Campbell <graham@mineuk.com>
+ * @author Graham Campbell <graham@alt-three.com>
  */
 class AlignDoubleArrowFixer extends AbstractAlignFixer
 {
@@ -95,10 +96,7 @@ class AlignDoubleArrowFixer extends AbstractAlignFixer
                 $until = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_PARENTHESIS_BRACE, $from);
                 $index = $until;
 
-                ++$this->deepestLevel;
-                ++$this->currentLevel;
-                $this->injectAlignmentPlaceholders($tokens, $from, $until);
-                --$this->currentLevel;
+                $this->injectArrayAlignmentPlaceholders($tokens, $from, $until);
                 continue;
             }
 
@@ -112,10 +110,7 @@ class AlignDoubleArrowFixer extends AbstractAlignFixer
                 $until = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_SQUARE_BRACE, $from);
                 $index = $until;
 
-                ++$this->deepestLevel;
-                ++$this->currentLevel;
-                $this->injectAlignmentPlaceholders($tokens, $from + 1, $until - 1);
-                --$this->currentLevel;
+                $this->injectArrayAlignmentPlaceholders($tokens, $from + 1, $until - 1);
                 continue;
             }
 
@@ -153,9 +148,7 @@ class AlignDoubleArrowFixer extends AbstractAlignFixer
                         $blockType = Tokens::detectBlockType($tokens[$arrayStartIndex]);
                         $arrayEndIndex = $tokens->findBlockEnd($blockType['type'], $arrayStartIndex);
 
-                        $arrayContent = $tokens->generatePartialCode($arrayStartIndex, $arrayEndIndex);
-
-                        if (false !== strpos($arrayContent, "\n")) {
+                        if ($tokens->isPartialCodeMultiline($arrayStartIndex, $arrayEndIndex)) {
                             break;
                         }
                     }
@@ -163,6 +156,22 @@ class AlignDoubleArrowFixer extends AbstractAlignFixer
                     ++$index;
                 }
             }
+        }
+    }
+
+    /**
+     * @param Tokens $tokens
+     * @param int    $from
+     * @param int    $until
+     */
+    private function injectArrayAlignmentPlaceholders(Tokens $tokens, $from, $until)
+    {
+        // Only inject placeholders for multi-line arrays
+        if ($tokens->isPartialCodeMultiline($from, $until)) {
+            ++$this->deepestLevel;
+            ++$this->currentLevel;
+            $this->injectAlignmentPlaceholders($tokens, $from, $until);
+            --$this->currentLevel;
         }
     }
 }

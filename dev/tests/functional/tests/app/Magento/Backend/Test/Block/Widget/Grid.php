@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -54,6 +54,13 @@ abstract class Grid extends Block
      * @var string
      */
     protected $rowItem = 'tbody tr';
+
+    /**
+     * The last row in the grid.
+     *
+     * @var string
+     */
+    protected $lastRowItem = 'tbody tr:last-child';
 
     /**
      * Locator value for link in action column
@@ -151,7 +158,7 @@ abstract class Grid extends Block
      *
      * @var string
      */
-    protected $loader = '[data-role="spinner"]';
+    protected $loader = '.admin__data-grid-outer-wrap [data-role="spinner"]';
 
     /**
      * Locator for next page action
@@ -269,13 +276,7 @@ abstract class Grid extends Block
      */
     protected function waitLoader()
     {
-        $this->browser->waitUntil(
-            function () {
-                $element = $this->browser->find($this->loader);
-                return $element->isVisible() == false ? true : null;
-            }
-        );
-
+        $this->waitForElementNotVisible($this->loader);
         $this->getTemplateBlock()->waitLoader();
     }
 
@@ -292,7 +293,7 @@ abstract class Grid extends Block
         if ($selectItem->isVisible()) {
             $selectItem->click();
         } else {
-            throw new \Exception('Searched item was not found.');
+            throw new \Exception("Searched item was not found by filter\n" . print_r($filter, true));
         }
     }
 
@@ -466,6 +467,7 @@ abstract class Grid extends Block
      */
     public function openFirstRow()
     {
+        $this->waitLoader();
         $this->_rootElement->find($this->firstRowSelector, Locator::SELECTOR_XPATH)->click();
     }
 

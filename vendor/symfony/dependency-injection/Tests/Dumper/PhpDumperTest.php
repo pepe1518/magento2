@@ -11,11 +11,16 @@
 
 namespace Symfony\Component\DependencyInjection\Tests\Dumper;
 
+use DummyProxyDumper;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Variable;
+use Symfony\Component\ExpressionLanguage\Expression;
+
+require_once __DIR__.'/../Fixtures/includes/classes.php';
 
 class PhpDumperTest extends \PHPUnit_Framework_TestCase
 {
@@ -85,12 +90,23 @@ class PhpDumperTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @dataProvider provideInvalidParameters
      * @expectedException \InvalidArgumentException
      */
-    public function testExportParameters()
+    public function testExportParameters($parameters)
     {
-        $dumper = new PhpDumper(new ContainerBuilder(new ParameterBag(array('foo' => new Reference('foo')))));
+        $dumper = new PhpDumper(new ContainerBuilder(new ParameterBag($parameters)));
         $dumper->dump();
+    }
+
+    public function provideInvalidParameters()
+    {
+        return array(
+            array(array('foo' => new Definition('stdClass'))),
+            array(array('foo' => new Expression('service("foo").foo() ~ (container.hasParameter("foo") ? parameter("foo") : "default")'))),
+            array(array('foo' => new Reference('foo'))),
+            array(array('foo' => new Variable('foo'))),
+        );
     }
 
     public function testAddParameters()
@@ -154,6 +170,31 @@ class PhpDumperTest extends \PHPUnit_Framework_TestCase
         $dumper->dump();
     }
 
+    /**
+     * @dataProvider provideInvalidFactories
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\RuntimeException
+     * @expectedExceptionMessage Cannot dump definition
+     */
+    public function testInvalidFactories($factory)
+    {
+        $container = new ContainerBuilder();
+        $def = new Definition('stdClass');
+        $def->setFactory($factory);
+        $container->setDefinition('bar', $def);
+        $dumper = new PhpDumper($container);
+        $dumper->dump();
+    }
+
+    public function provideInvalidFactories()
+    {
+        return array(
+            array(array('', 'method')),
+            array(array('class', '')),
+            array(array('...', 'method')),
+            array(array('class', '...')),
+        );
+    }
+
     public function testAliases()
     {
         $container = include self::$fixturesPath.'/containers/container9.php';
@@ -189,7 +230,7 @@ class PhpDumperTest extends \PHPUnit_Framework_TestCase
         $container->set('bar', $bar = new \stdClass());
         $container->setParameter('foo_bar', 'foo_bar');
 
-        $this->assertEquals($bar, $container->get('bar'), '->set() overrides an already defined service');
+        $this->assertSame($bar, $container->get('bar'), '->set() overrides an already defined service');
     }
 
     public function testOverrideServiceWhenUsingADumpedContainerAndServiceIsUsedFromAnotherOne()
@@ -216,6 +257,92 @@ class PhpDumperTest extends \PHPUnit_Framework_TestCase
         $container->compile();
 
         $dumper = new PhpDumper($container);
+        $dumper->dump();
+    }
+
+    public function testDumpAutowireData()
+    {
+        $container = include self::$fixturesPath.'/containers/container24.php';
+        $dumper = new PhpDumper($container);
+
+        $this->assertEquals(file_get_contents(self::$fixturesPath.'/php/services24.php'), $dumper->dump());
+    }
+
+    public function testInlinedDefinitionReferencingServiceContainer()
+    {
+        $container = new ContainerBuilder();
+        $container->register('foo', 'stdClass')->addMethodCall('add', array(new Reference('service_container')))->setPublic(false);
+        $container->register('bar', 'stdClass')->addArgument(new Reference('foo'));
+        $container->compile();
+
+        $dumper = new PhpDumper($container);
+        $this->assertStringEqualsFile(self::$fixturesPath.'/php/services13.php', $dumper->dump(), '->dump() dumps inline definitions which reference service_container');
+    }
+
+    public function testInitializePropertiesBeforeMethodCalls()
+    {
+        require_once self::$fixturesPath.'/includes/classes.php';
+
+        $container = new ContainerBuilder();
+        $container->register('foo', 'stdClass');
+        $container->register('bar', 'MethodCallClass')
+            ->setProperty('simple', 'bar')
+            ->setProperty('complex', new Reference('foo'))
+            ->addMethodCall('callMe');
+        $container->compile();
+
+        $dumper = new PhpDumper($container);
+        eval('?>'.$dumper->dump(array('class' => 'Symfony_DI_PhpDumper_Test_Properties_Before_Method_Calls')));
+
+        $container = new \Symfony_DI_PhpDumper_Test_Properties_Before_Method_Calls();
+        $this->assertTrue($container->get('bar')->callPassed(), '->dump() initializes properties before method calls');
+    }
+
+    public function testCircularReferenceAllowanceForLazyServices()
+    {
+        $container = new ContainerBuilder();
+        $container->register('foo', 'stdClass')->addArgument(new Reference('bar'));
+        $container->register('bar', 'stdClass')->setLazy(true)->addArgument(new Reference('foo'));
+        $container->compile();
+
+        $dumper = new PhpDumper($container);
+        $dumper->dump();
+    }
+
+    public function testCircularReferenceAllowanceForInlinedDefinitionsForLazyServices()
+    {
+        /*
+         *   test graph:
+         *              [connection] -> [event_manager] --> [entity_manager](lazy)
+         *                                                           |
+         *                                                           --(call)- addEventListener ("@lazy_service")
+         *
+         *              [lazy_service](lazy) -> [entity_manager](lazy)
+         *
+         */
+
+        $container = new ContainerBuilder();
+
+        $eventManagerDefinition = new Definition('stdClass');
+
+        $connectionDefinition = $container->register('connection', 'stdClass');
+        $connectionDefinition->addArgument($eventManagerDefinition);
+
+        $container->register('entity_manager', 'stdClass')
+            ->setLazy(true)
+            ->addArgument(new Reference('connection'));
+
+        $lazyServiceDefinition = $container->register('lazy_service', 'stdClass');
+        $lazyServiceDefinition->setLazy(true);
+        $lazyServiceDefinition->addArgument(new Reference('entity_manager'));
+
+        $eventManagerDefinition->addMethodCall('addEventListener', array(new Reference('lazy_service')));
+
+        $container->compile();
+
+        $dumper = new PhpDumper($container);
+
+        $dumper->setProxyDumper(new DummyProxyDumper());
         $dumper->dump();
     }
 }

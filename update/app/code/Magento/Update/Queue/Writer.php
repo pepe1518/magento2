@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Update\Queue;
@@ -17,9 +17,12 @@ class Writer extends Reader
     public function write($data)
     {
         if (file_exists($this->queueFilePath)) {
-            json_decode($data);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \RuntimeException(sprintf('Content to write must be a valid JSON.'));
+            // empty string is used to clear the job queue
+            if ($data != '') {
+                json_decode($data);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new \RuntimeException(sprintf('Content to write must be a valid JSON.'));
+                }
             }
             return file_put_contents($this->queueFilePath, $data);
         }

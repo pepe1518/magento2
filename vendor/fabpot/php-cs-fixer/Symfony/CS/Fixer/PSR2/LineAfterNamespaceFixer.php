@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -28,24 +29,28 @@ class LineAfterNamespaceFixer extends AbstractFixer
     public function fix(\SplFileInfo $file, $content)
     {
         $tokens = Tokens::fromCode($content);
+        $lastIndex = $tokens->count() - 1;
 
-        for ($index = $tokens->count() - 1; $index >= 0; --$index) {
+        for ($index = $lastIndex; $index >= 0; --$index) {
             $token = $tokens[$index];
 
-            if (T_NAMESPACE === $token->getId()) {
-                $semicolonIndex = $tokens->getNextTokenOfKind($index, array(';', '{'));
+            if ($token->isGivenKind(T_NAMESPACE)) {
+                $semicolonIndex = $tokens->getNextTokenOfKind($index, array(';', '{', array(T_CLOSE_TAG)));
                 $semicolonToken = $tokens[$semicolonIndex];
 
                 if (!isset($tokens[$semicolonIndex + 1]) || !$semicolonToken->equals(';')) {
                     continue;
                 }
 
-                $nextToken = $tokens[$semicolonIndex + 1];
+                $nextIndex = $semicolonIndex + 1;
+                $nextToken = $tokens[$nextIndex];
 
                 if (!$nextToken->isWhitespace()) {
                     $tokens->insertAt($semicolonIndex + 1, new Token(array(T_WHITESPACE, "\n\n")));
                 } else {
-                    $nextToken->setContent("\n\n".ltrim($nextToken->getContent()));
+                    $nextToken->setContent(
+                        ($nextIndex === $lastIndex ? "\n" : "\n\n").ltrim($nextToken->getContent())
+                    );
                 }
             }
         }

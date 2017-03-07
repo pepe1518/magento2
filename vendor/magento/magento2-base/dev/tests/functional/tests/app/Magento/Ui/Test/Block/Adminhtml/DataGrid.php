@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -9,6 +9,7 @@ namespace Magento\Ui\Test\Block\Adminhtml;
 use Magento\Mtf\Client\Locator;
 use Magento\Backend\Test\Block\Widget\Grid;
 use Magento\Mtf\Client\Element\SimpleElement;
+use Magento\Mtf\Client\ElementInterface;
 
 /**
  * Backend Data Grid with advanced functionality for managing entities.
@@ -46,46 +47,46 @@ class DataGrid extends Grid
     protected $selectItem = 'tbody tr [data-action="select-row"]';
 
     /**
-     * Secondary part of row locator template for getRow() method
+     * Secondary part of row locator template for getRow() method.
      *
      * @var string
      */
     protected $rowTemplate = 'td[*[contains(.,normalize-space("%s"))]]';
 
     /**
-     * Secondary part of row locator template for getRow() method with strict option
+     * Secondary part of row locator template for getRow() method with strict option.
      *
      * @var string
      */
     protected $rowTemplateStrict = 'td[*[text()[normalize-space()="%s"]]]';
 
     /**
+     * Mass action toggle button (located in the Grid).
+     *
+     * @var string
+     */
+    protected $massActionToggleButton = '//th//button[@data-toggle="dropdown"]';
+
+    /**
      * Mass action toggle list.
      *
      * @var string
      */
-    protected $massActionToggleList = '//span[contains(@class, "action-menu-item") and .= "%s"]';
+    protected $massActionToggleList = './/span[contains(@class, "action-menu-item") and .= "%s"]';
 
     /**
-     * Mass action toggle button.
+     * Action button (located above the Grid).
      *
      * @var string
      */
-    protected $massActionToggleButton = 'th [data-toggle="dropdown"]';
+    protected $actionButton = '.action-select';
 
     /**
-     * Mass action button.
+     * Action list.
      *
      * @var string
      */
-    protected $massActionButton = '.action-select';
-
-    /**
-     * Locator fo action button.
-     *
-     * @var string
-     */
-    protected $actionButton = '.modal-inner-wrap .action-secondary';
+    protected $actionList = './/span[contains(@class, "action-menu-item") and .= "%s"]';
 
     /**
      * Column header locator.
@@ -95,21 +96,45 @@ class DataGrid extends Grid
     protected $columnHeader = './/*[@data-role="grid-wrapper"]//th/span[.="%s"]';
 
     /**
+     * Grid row xpath locator.
+     *
      * @var string
      */
-    protected $rowById = "//tr[//input[@data-action='select-row' and @value='%s']]";
+    protected $rowById = ".//tr[td//input[@data-action='select-row' and @value='%s']]";
 
     /**
+     * Column header number.
+     *
      * @var string
      */
-    protected $cellByHeader = "//td[count(//th[span[.='%s']]/preceding-sibling::th)+1]";
+    protected $columnNumber = ".//th[span[.='%s']][not(ancestor::*[@class='sticky-header'])]/preceding-sibling::th";
 
     /**
+     * Cell number.
+     *
+     * @var string
+     */
+    protected $cellByHeader = "//td[%s+1]";
+
+    // @codingStandardsIgnoreStart
+    /**
+     * Admin data grid header selector.
+     *
+     * @var string
+     */
+    private $gridHeader = './/div[@class="admin__data-grid-header"][(not(ancestor::*[@class="sticky-header"]) and not(contains(@style,"visibility: hidden"))) or (ancestor::*[@class="sticky-header" and not(contains(@style,"display: none"))])]';
+    // @codingStandardsIgnoreEnd
+
+    /**
+     * Search field.
+     *
      * @var string
      */
     protected $fullTextSearchField = '.data-grid-search-control-wrap .data-grid-search-control';
 
     /**
+     * Search button.
+     *
      * @var string
      */
     protected $fullTextSearchButton = '.data-grid-search-control-wrap .action-submit';
@@ -133,14 +158,14 @@ class DataGrid extends Grid
      *
      * @var string
      */
-    protected $sortLink = "//th[contains(@class, '%s')]/span[contains(text(), '%s')]";
+    protected $sortLink = './/div[@data-role="grid-wrapper"]//th[contains(@class, "%s")]/span[contains(text(), "%s")]';
 
     /**
      * Current page input.
      *
      * @var string
      */
-    protected $currentPage = '#pageCurrent';
+    protected $currentPage = ".//*[@data-ui-id='current-page-input'][not(ancestor::*[@class='sticky-header'])]";
 
     /**
      * Clear all applied Filters.
@@ -163,7 +188,7 @@ class DataGrid extends Grid
      */
     protected function waitFilterToLoad()
     {
-        $this->getTemplateBlock()->waitForElementNotVisible($this->loader);
+        $this->getTemplateBlock()->waitLoader();
         $browser = $this->_rootElement;
         $selector = $this->filterButton . ', ' . $this->resetButton;
         $browser->waitUntil(
@@ -234,8 +259,27 @@ class DataGrid extends Grid
         if ($rowItem->isVisible()) {
             $this->clickEditLink($rowItem);
         } else {
-            throw new \Exception('Searched item was not found.');
+            throw new \Exception("Searched item was not found by filter\n" . print_r($filter, true));
         }
+        $this->waitLoader();
+    }
+
+    /**
+     * Search item and select it.
+     *
+     * @param array $filter
+     * @throws \Exception
+     */
+    public function searchAndSelect(array $filter)
+    {
+        $this->search($filter);
+        $rowItem = $this->getRow($filter);
+        if ($rowItem->isVisible()) {
+            $rowItem->find($this->selectItem)->click();
+        } else {
+            throw new \Exception("Searched item was not found by filter\n" . print_r($filter, true));
+        }
+        $this->waitLoader();
     }
 
     /**
@@ -256,26 +300,59 @@ class DataGrid extends Grid
         }
         $this->selectItems($items);
         if ($massActionSelection) {
-            $this->_rootElement->find($this->massActionToggleButton)->click();
-            $this->_rootElement
-                ->find(sprintf($this->massActionToggleList, $massActionSelection), Locator::SELECTOR_XPATH)
-                ->click();
+            $this->selectMassAction($massActionSelection);
         }
-        $actionType = is_array($action) ? key($action) : $action;
-        $this->_rootElement->find($this->massActionButton)->click();
-        $this->_rootElement
-            ->find(sprintf($this->massActionToggleList, $actionType), Locator::SELECTOR_XPATH)
-            ->click();
-        if (is_array($action)) {
-            $this->_rootElement
-                ->find(sprintf($this->massActionToggleList, end($action)), Locator::SELECTOR_XPATH)
-                ->click();
-        }
+        $this->selectAction($action);
         if ($acceptAlert) {
             $element = $this->browser->find($this->alertModal);
             /** @var \Magento\Ui\Test\Block\Adminhtml\Modal $modal */
-            $modal = $this->blockFactory->create('Magento\Ui\Test\Block\Adminhtml\Modal', ['element' => $element]);
+            $modal = $this->blockFactory->create(
+                \Magento\Ui\Test\Block\Adminhtml\Modal::class,
+                ['element' => $element]
+            );
             $modal->acceptAlert();
+        }
+    }
+
+    /**
+     * Do mass select/deselect using the dropdown in the grid.
+     *
+     * @param string $massActionSelection
+     * @return void
+     */
+    public function selectMassAction($massActionSelection)
+    {
+        //Checks which dropdown is visible and uses it.
+        for ($i = 1; $i <= 2; $i++) {
+            $massActionButton = '(' . $this->massActionToggleButton . ")[$i]";
+            $massActionList = '(' . $this->massActionToggleList . ")[$i]";
+            if ($this->_rootElement->find($massActionButton, Locator::SELECTOR_XPATH)->isVisible()) {
+                $this->_rootElement->find($massActionButton, Locator::SELECTOR_XPATH)->click();
+                $this->_rootElement
+                    ->find(sprintf($massActionList, $massActionSelection), Locator::SELECTOR_XPATH)
+                    ->click();
+                break;
+            }
+        }
+    }
+
+    /**
+     * Peform action using the dropdown above the grid.
+     *
+     * @param array|string $action [array -> key = value from first select; value => value from subselect]
+     * @return void
+     */
+    public function selectAction($action)
+    {
+        $actionType = is_array($action) ? key($action) : $action;
+        $this->getGridHeaderElement()->find($this->actionButton)->click();
+        $this->getGridHeaderElement()
+            ->find(sprintf($this->actionList, $actionType), Locator::SELECTOR_XPATH)
+            ->click();
+        if (is_array($action)) {
+            $this->getGridHeaderElement()
+                ->find(sprintf($this->actionList, end($action)), Locator::SELECTOR_XPATH)
+                ->click();
         }
     }
 
@@ -293,7 +370,7 @@ class DataGrid extends Grid
             $this->sortGridByField('ID');
         }
         foreach ($items as $item) {
-            $this->_rootElement->find($this->currentPage)->setValue('');
+            $this->_rootElement->find($this->currentPage, Locator::SELECTOR_XPATH)->setValue('');
             $this->waitLoader();
             $selectItem = $this->getRow($item)->find($this->selectItem);
             do {
@@ -305,7 +382,7 @@ class DataGrid extends Grid
                 }
             } while ($this->nextPage());
             if (!$selectItem->isVisible()) {
-                throw new \Exception('Searched item was not found.');
+                throw new \Exception("Searched item was not found\n" . print_r($item, true));
             }
         }
     }
@@ -328,6 +405,8 @@ class DataGrid extends Grid
     }
 
     /**
+     * Sort grid by column.
+     *
      * @param string $columnLabel
      */
     public function sortByColumn($columnLabel)
@@ -335,6 +414,7 @@ class DataGrid extends Grid
         $this->waitLoader();
         $this->getTemplateBlock()->waitForElementNotVisible($this->loader);
         $this->_rootElement->find(sprintf($this->columnHeader, $columnLabel), Locator::SELECTOR_XPATH)->click();
+        $this->waitLoader();
     }
 
     /**
@@ -373,7 +453,11 @@ class DataGrid extends Grid
     {
         $this->waitLoader();
         $this->getTemplateBlock()->waitForElementNotVisible($this->loader);
-        $selector = sprintf($this->rowById, $id) . sprintf($this->cellByHeader, $headerLabel);
+        $columnNumber = count(
+            $this->_rootElement->getElements(sprintf($this->columnNumber, $headerLabel), Locator::SELECTOR_XPATH)
+        );
+        $selector = sprintf($this->rowById, $id) . sprintf($this->cellByHeader, $columnNumber);
+
         return $this->_rootElement->find($selector, Locator::SELECTOR_XPATH)->getText();
     }
 
@@ -386,5 +470,37 @@ class DataGrid extends Grid
         $this->getTemplateBlock()->waitForElementNotVisible($this->loader);
         $this->_rootElement->find($this->fullTextSearchField)->setValue($text);
         $this->_rootElement->find($this->fullTextSearchButton)->click();
+    }
+
+    /**
+     * Get rows data.
+     *
+     * @param array $columns
+     * @return array
+     */
+    public function getRowsData(array $columns)
+    {
+        $data = [];
+        $rows = $this->_rootElement->getElements($this->rowItem);
+        foreach ($rows as $row) {
+            $rowData = [];
+            foreach ($columns as $columnName) {
+                $rowData[$columnName] = trim($row->find('div[data-index="' . $columnName . '"]')->getText());
+            }
+
+            $data[] = $rowData;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Returns admin data grid header element.
+     *
+     * @return ElementInterface
+     */
+    private function getGridHeaderElement()
+    {
+        return $this->_rootElement->find($this->gridHeader, Locator::SELECTOR_XPATH);
     }
 }

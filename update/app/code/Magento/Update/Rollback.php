@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -58,7 +58,7 @@ class Rollback
      */
     public function execute($backupFilePath)
     {
-        $this->status->add(sprintf('Restoring archive from "%s" ...', $backupFilePath));
+        $this->status->add(sprintf('Restoring archive from "%s" ...', $backupFilePath), \Psr\Log\LogLevel::INFO);
         $this->unzipArchive($backupFilePath);
     }
 
@@ -91,11 +91,11 @@ class Rollback
                 $this->deleteDirectory($this->restoreTargetDir, $exclusions);
             } catch (\Exception $e) {
                 $this->status->setUpdateError();
-                $this->status->add('Error during rollback ' . $e->getMessage());
+                $this->status->add('Error during rollback ' . $e->getMessage(), \Psr\Log\LogLevel::ERROR);
             }
         } else {
             $this->status->setUpdateError();
-            $this->status->add('Invalid backup type');
+            $this->status->add('Invalid backup type', \Psr\Log\LogLevel::INFO);
         }
         $tar->extractTo($this->restoreTargetDir , null, true);
         @unlink($tarFile);

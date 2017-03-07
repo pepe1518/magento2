@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\Search\Test\Unit\Adapter\Mysql;
@@ -50,25 +50,12 @@ class ResponseFactoryTest extends \PHPUnit_Framework_TestCase
             ],
             'aggregations' => [],
         ];
-        $exceptedResponse = [
-            'documents' => [
-                [
-                    ['name' => 'title', 'value' => 'oneTitle'],
-                    ['name' => 'description', 'value' => 'oneDescription'],
-                ],
-                [
-                    ['name' => 'title', 'value' => 'twoTitle'],
-                    ['name' => 'description', 'value' => 'twoDescription'],
-                ],
-            ],
-            'aggregations' => [],
-        ];
 
         $this->documentFactory->expects($this->at(0))->method('create')
-            ->with($this->equalTo($exceptedResponse['documents'][0]))
+            ->with($this->equalTo($rawResponse['documents'][0]))
             ->will($this->returnValue('document1'));
         $this->documentFactory->expects($this->at(1))->method('create')
-            ->with($exceptedResponse['documents'][1])
+            ->with($rawResponse['documents'][1])
             ->will($this->returnValue('document2'));
 
         $this->objectManager->expects($this->once())->method('create')

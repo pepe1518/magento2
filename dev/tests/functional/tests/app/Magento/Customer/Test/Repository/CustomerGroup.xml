@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!--
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 -->
@@ -46,6 +46,14 @@
         <dataset name="NOT_LOGGED_IN">
             <field name="customer_group_id" xsi:type="string">0</field>
             <field name="customer_group_code" xsi:type="string">NOT LOGGED IN</field>
+            <field name="tax_class_id" xsi:type="array">
+                <item name="dataset" xsi:type="string">retail_customer</item>
+            </field>
+        </dataset>
+
+        <dataset name="ALL_GROUPS">
+            <field name="customer_group_id" xsi:type="string">32000</field>
+            <field name="customer_group_code" xsi:type="string">ALL GROUPS</field>
             <field name="tax_class_id" xsi:type="array">
                 <item name="dataset" xsi:type="string">retail_customer</item>
             </field>

@@ -1,9 +1,12 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Newsletter\Test\Unit\Model\Plugin;
+
+use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Model\ResourceModel\CustomerRepository;
 
 class CustomerPluginTest extends \PHPUnit_Framework_TestCase
 {
@@ -27,14 +30,14 @@ class CustomerPluginTest extends \PHPUnit_Framework_TestCase
      */
     protected $objectManager;
 
-    public function setUp()
+    protected function setUp()
     {
         $this->subscriberFactory = $this->getMockBuilder('\Magento\Newsletter\Model\SubscriberFactory')
             ->disableOriginalConstructor()
             ->setMethods(['create'])
             ->getMock();
         $this->subscriber = $this->getMockBuilder('\Magento\Newsletter\Model\Subscriber')
-            ->setMethods(['loadByEmail', 'getId', 'delete', 'updateSubscription'])
+            ->setMethods(['loadByEmail', 'getId', 'delete', 'updateSubscription', 'subscribeCustomerById', 'unsubscribeCustomerById'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->subscriberFactory->expects($this->any())->method('create')->willReturn($this->subscriber);
@@ -58,6 +61,80 @@ class CustomerPluginTest extends \PHPUnit_Framework_TestCase
         $this->subscriber->expects($this->once())->method('updateSubscription')->with($customerId)->willReturnSelf();
 
         $this->assertEquals($customer, $this->plugin->afterSave($subject, $customer));
+    }
+
+    public function testAroundSaveWithoutIsSubscribed()
+    {
+        $passwordHash = null;
+        $customerId = 1;
+        /** @var CustomerInterface | \PHPUnit_Framework_MockObject_MockObject $customer */
+        $customer = $this->getMock('Magento\Customer\Api\Data\CustomerInterface');
+        $proceed  = function(CustomerInterface $customer, $passwordHash = null) use($customer) {
+            return $customer;
+        };
+        /** @var CustomerRepository | \PHPUnit_Framework_MockObject_MockObject $subject */
+        $subject = $this->getMock('\Magento\Customer\Api\CustomerRepositoryInterface');
+
+        $customer->expects($this->atLeastOnce())
+            ->method("getId")
+            ->willReturn($customerId);
+
+        $this->assertEquals($customer, $this->plugin->aroundSave($subject, $proceed, $customer, $passwordHash));
+    }
+
+    /**
+     * @return array
+     */
+    public function provideExtensionAttributeDataForAroundSave() {
+        return [
+            [true, true] ,
+            [false, false]
+        ];
+    }
+
+    /**
+     * @dataProvider provideExtensionAttributeDataForAroundSave
+     */
+    public function testAroundSaveWithIsSubscribed($isSubscribed, $subscribeIsCreated) {
+        $passwordHash = null;
+        $customerId = 1;
+        /** @var CustomerInterface | \PHPUnit_Framework_MockObject_MockObject $customer */
+        $customer = $this->getMock('Magento\Customer\Api\Data\CustomerInterface');
+        $extensionAttributes = $this
+            ->getMockBuilder("Magento\Customer\Api\Data\CustomerExtensionInterface")
+            ->setMethods(["getIsSubscribed", "setIsSubscribed"])
+            ->getMock();
+
+        $extensionAttributes
+            ->expects($this->atLeastOnce())
+            ->method("getIsSubscribed")
+            ->willReturn($isSubscribed);
+
+        $customer->expects($this->atLeastOnce())
+            ->method("getExtensionAttributes")
+            ->willReturn($extensionAttributes);
+
+        if ($subscribeIsCreated) {
+            $this->subscriber->expects($this->once())
+                ->method("subscribeCustomerById")
+                ->with($customerId);
+        } else {
+            $this->subscriber->expects($this->once())
+                ->method("unsubscribeCustomerById")
+                ->with($customerId);
+        }
+
+        $proceed  = function(CustomerInterface $customer, $passwordHash = null) use($customer) {
+            return $customer;
+        };
+        /** @var CustomerRepository | \PHPUnit_Framework_MockObject_MockObject $subject */
+        $subject = $this->getMock('\Magento\Customer\Api\CustomerRepositoryInterface');
+
+        $customer->expects($this->atLeastOnce())
+            ->method("getId")
+            ->willReturn($customerId);
+
+        $this->assertEquals($customer, $this->plugin->aroundSave($subject, $proceed, $customer, $passwordHash));
     }
 
     public function testAroundDelete()

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 -->
@@ -10,7 +10,7 @@
     <preference for="Magento\Framework\Shell\CommandRendererInterface" type="Magento\Framework\Shell\CommandRenderer" />
     <type name="Magento\Cron\Model\Config\Reader\Db">
         <arguments>
-            <argument name="defaultReader" xsi:type="object">Magento\Store\Model\Config\Reader\DefaultReader</argument>
+            <argument name="defaultReader" xsi:type="object">DefaultScopeReader</argument>
         </arguments>
     </type>
     <type name="Magento\Config\Model\Config\Structure\Converter">
@@ -29,10 +29,17 @@
             <argument name="shell" xsi:type="object">shellBackground</argument>
         </arguments>
     </type>
-    <type name="Magento\Framework\Console\CommandList">
+    <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="cronCommand" xsi:type="object">Magento\Cron\Console\Command\CronCommand</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\App\AreaList">
+        <arguments>
+            <argument name="areas" xsi:type="array">
+                <item name="crontab" xsi:type="null" />
             </argument>
         </arguments>
     </type>

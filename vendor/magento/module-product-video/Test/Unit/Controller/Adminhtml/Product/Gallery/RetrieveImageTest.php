@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\ProductVideo\Test\Unit\Controller\Adminhtml\Product\Gallery;
@@ -69,8 +69,9 @@ class RetrieveImageTest extends \PHPUnit_Framework_TestCase
     /**
      * Set up
      */
-    public function setUp()
+    protected function setUp()
     {
+        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
         $this->contextMock = $this->getMock('\Magento\Backend\App\Action\Context', [], [], '', false);
         $this->rawFactoryMock =
             $this->getMock('\Magento\Framework\Controller\Result\RawFactory', ['create'], [], '', false);
@@ -95,9 +96,16 @@ class RetrieveImageTest extends \PHPUnit_Framework_TestCase
         $this->storageFileMock =
             $this->getMock('\Magento\MediaStorage\Model\ResourceModel\File\Storage\File', [], [], '', false);
         $this->request = $this->getMock('\Magento\Framework\App\RequestInterface');
-        $this->contextMock->expects($this->any())->method('getRequest')->will($this->returnValue($this->request));
 
-        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
+        $managerMock = $this->getMockBuilder(\Magento\Framework\ObjectManagerInterface::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['get'])
+            ->getMockForAbstractClass();
+        $managerMock->expects($this->once())
+            ->method('get')
+            ->willReturn(new \Magento\Framework\Validator\AllowedProtocols());
+        $this->contextMock->expects($this->any())->method('getRequest')->will($this->returnValue($this->request));
+        $this->contextMock->expects($this->any())->method('getObjectManager')->willReturn($managerMock);
 
         $this->image = $objectManager->getObject(
             '\Magento\ProductVideo\Controller\Adminhtml\Product\Gallery\RetrieveImage',

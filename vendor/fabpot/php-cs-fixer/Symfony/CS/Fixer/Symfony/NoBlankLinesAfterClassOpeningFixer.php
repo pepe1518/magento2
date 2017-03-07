@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -45,6 +46,14 @@ class NoBlankLinesAfterClassOpeningFixer extends AbstractFixer
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function getDescription()
+    {
+        return 'There should be no empty lines after class opening brace.';
+    }
+
+    /**
      * Cleanup a whitespace token.
      *
      * @param Token $token
@@ -58,13 +67,5 @@ class NoBlankLinesAfterClassOpeningFixer extends AbstractFixer
             $lines = Utils::splitLines($content);
             $token->setContent("\n".end($lines));
         }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getDescription()
-    {
-        return 'There should be no empty lines after class opening brace.';
     }
 }

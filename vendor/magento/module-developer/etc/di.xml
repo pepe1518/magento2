@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 -->
@@ -92,7 +92,7 @@
     </type>
     <!-- End configuration for \Magento\Developer\Console\Command\SourceThemeDeployCommand -->
 
-    <type name="Magento\Framework\Console\CommandList">
+    <type name="Magento\Framework\Console\CommandListInterface">
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="dev_tests_run" xsi:type="object">Magento\Developer\Console\Command\DevTestsRunCommand</item>
@@ -241,4 +241,12 @@
             <argument name="subDir" xsi:type="string">web</argument>
         </arguments>
     </virtualType>
+
+    <type name="Magento\Config\Model\Config\Export\ExcludeList">
+        <arguments>
+            <argument name="configs" xsi:type="array">
+                <item name="dev/restrict/allow_ips" xsi:type="string">1</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

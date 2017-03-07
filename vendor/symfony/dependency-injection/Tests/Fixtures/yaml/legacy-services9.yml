@@ -1,4 +1,5 @@
 parameters:
+    foo_class: Bar\FooClass
     baz_class: BazClass
     foo: bar
 
@@ -18,11 +19,15 @@ services:
 
         configurator: sc_configure
     foo.baz:
-        class: %baz_class%
-        factory_class: %baz_class%
+        class: '%baz_class%'
+        factory_class: '%baz_class%'
         factory_method: getInstance
         configurator: ['%baz_class%', configureStatic1]
     factory_service:
         class: Bar
         factory_method: getInstance
         factory_service: foo.baz
+    foo_bar:
+        class: '%foo_class%'
+        shared: false
+        scope: prototype

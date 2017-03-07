@@ -3,6 +3,323 @@ CHANGELOG for PHP CS Fixer
 
 This file contains changelogs for stable releases only.
 
+Changelog for v1.13.1
+---------------------
+
+* minor #2342 Application - adjust test to not depend on symfony/console version (keradus)
+* minor #2344 AppVeyor: enforce PHP version (keradus)
+
+Changelog for v1.13.0
+---------------------
+
+* bug #2303 ClassDefinitionFixer - Anonymous classes fixing (SpacePossum)
+* feature #2208 Added fixer for PHPUnit's @expectedException annotation (ro0NL)
+* feature #2249 Added ProtectedToPrivateFixer (Slamdunk, SpacePossum)
+* feature #2264 SelfUpdateCommand - Do not update to next major version by default (SpacePossum)
+* feature #2328 ClassDefinitionFixer - Anonymous classes format by PSR12 (SpacePossum)
+* feature #2333 PhpUnitFqcnAnnotationFixer - support more annotations (keradus)
+* minor #2256 EmptyReturnFixer - it's now risky fixer due to null vs void (keradus)
+* minor #2281 Add issue template (SpacePossum)
+* minor #2307 Update .editorconfig (SpacePossum)
+* minor #2310 CI: update AppVeyor to use newest PHP, silence the composer (keradus)
+* minor #2315 Token - Deprecate getLine() (SpacePossum)
+* minor #2320 Clear up status code on 1.x (SpacePossum)
+
+Changelog for v1.12.4
+---------------------
+
+* bug #2235 OrderedImportsFixer - PHP 7 group imports support (SpacePossum)
+* minor #2276 Tokens cleanup (keradus)
+* minor #2277 Remove trailing spaces (keradus)
+* minor #2294 Improve Travis configuration (keradus)
+* minor #2297 Use phpdbg instead of xdebug (keradus)
+* minor #2299 Travis: proper xdebug disabling (keradus)
+* minor #2301 Travis: update platform adjusting (keradus)
+
+Changelog for v1.12.3
+---------------------
+
+* bug #2155 ClassDefinitionFixer - overhaul (SpacePossum)
+* bug #2187 MultipleUseFixer - Fix handling comments (SpacePossum)
+* bug #2209 LinefeedFixer - Fix in a safe way (SpacePossum)
+* bug #2228 NoEmptyLinesAfterPhpdocs, SingleBlankLineBeforeNamespace - Fix priority (SpacePossum)
+* bug #2230 FunctionDeclarationFixer - Fix T_USE case (SpacePossum)
+* bug #2232 Add a test for style of varaible decalration : var (daiglej)
+* bug #2246 Fix itest requirements (keradus)
+* minor #2238 .gitattributes - specified line endings (keradus)
+* minor #2239 IntegrationCase - no longer internal (keradus)
+
+Changelog for v1.12.2
+---------------------
+
+* bug #2191 PhpdocToCommentFixer - fix false positive for docblock of variable (keradus)
+* bug #2193 UnneededControlParenthesesFixer - Fix more return cases. (SpacePossum)
+* bug #2198 FileCacheManager - fix exception message and undefined property (j0k3r)
+* minor #2170 Add dollar sign prefix for consistency (bcremer)
+* minor #2190 .travis.yml - improve Travis speed for tags (keradus)
+* minor #2196 PhpdocTypesFixer - support iterable type (GrahamCampbell)
+* minor #2197 Update cookbook and readme (g105b, SpacePossum)
+* minor #2203 README.rst - change formatting (ro0NL)
+* minor #2204 FixCommand - clean unused var (keradus)
+* minor #2205 Add integration test for iterable type (keradus)
+
+Changelog for v1.12.1
+---------------------
+
+* bug #2144 Remove temporary files not deleted by destructor on failure (adawolfa)
+* bug #2150 SelfUpdateCommand: resolve symlink (julienfalque)
+* bug #2162 Fix issue where an exception is thrown if the cache file exists but is empty. (ikari7789)
+* bug #2164 OperatorsSpacesFixer - Do not unalign double arrow and equals operators (SpacePossum)
+* bug #2167 Rewrite file removal (keradus)
+* minor #2152 Code cleanup (keradus)
+* minor #2154 ShutdownFileRemoval - Fixed file header (GrahamCampbell)
+
+Changelog for v1.12.0
+---------------------
+
+* feature #1493 Added MethodArgumentDefaultValueFixer (lmanzke)
+* feature #1495 BracesFixer - added support for declare (EspadaV8)
+* feature #1518 Added ClassDefinitionFixer (SpacePossum)
+* feature #1543 [PSR-2] Switch case space fixer (Soullivaneuh)
+* feature #1577 Added SpacesAfterSemicolonFixer (SpacePossum)
+* feature #1580 Added HeredocToNowdocFixer (gharlan)
+* feature #1581 UnneededControlParenthesesFixer - add "break" and "continue" support (gharlan)
+* feature #1610 HashToSlashCommentFixer - Add (SpacePossum)
+* feature #1613 ScalarCastFixer - LowerCaseCastFixer - Add (SpacePossum)
+* feature #1659 NativeFunctionCasingFixer - Add (SpacePossum)
+* feature #1661 SwitchCaseSemicolonToColonFixer - Add (SpacePossum)
+* feature #1662 Added CombineConsecutiveUnsetsFixer (SpacePossum)
+* feature #1671 Added NoEmptyStatementFixer (SpacePossum)
+* feature #1705 Added NoUselessReturnFixer (SpacePossum, keradus)
+* feature #1735 Added NoTrailingWhitespaceInCommentFixer (keradus)
+* feature #1750 Add PhpdocSingleLineVarSpacingFixer (SpacePossum)
+* feature #1765 Added NoEmptyPhpdocFixer (SpacePossum)
+* feature #1773 Add NoUselessElseFixer (gharlan, SpacePossum)
+* feature #1786 Added NoEmptyCommentFixer (SpacePossum)
+* feature #1792 Add PhpUnitDedicateAssertFixer. (SpacePossum)
+* feature #1894 BracesFixer - correctly fix indents of anonymous functions/classes (gharlan)
+* feature #1985 Added ClassKeywordRemoveFixer (Soullivaneuh)
+* feature #2020 Added PhpdocAnnotationWithoutDotFixer (keradus)
+* feature #2067 Added DeclareEqualNormalizeFixer (keradus)
+* feature #2078 Added SilencedDeprecationErrorFixer (HeahDude)
+* feature #2082 Added MbStrFunctionsFixer (Slamdunk)
+* bug #1657 SwitchCaseSpaceFixer - Fix spacing between 'case' and semicolon (SpacePossum)
+* bug #1684 SpacesAfterSemicolonFixer - fix loops handling (SpacePossum, keradus)
+* bug #1700 Fixer - resolve import conflict (keradus)
+* bug #1836 NoUselessReturnFixer - Do not remove return if last statement in short if statement (SpacePossum)
+* bug #1879 HeredocToNowdocFixer - Handle space in heredoc token (SpacePossum)
+* bug #1896 FixCommand - Fix escaping of diff output (SpacePossum)
+* bug #2034 IncludeFixer - fix support for close tag (SpacePossum)
+* bug #2040 PhpdocAnnotationWithoutDotFixer - fix crash on odd character (keradus)
+* bug #2041 DefaultFinder should implement FinderInterface (keradus)
+* bug #2050 PhpdocAnnotationWithoutDotFixer - handle ellipsis (keradus)
+* bug #2051 NativeFunctionCasingFixer - call to constructor with default NS of class with name matching native function name fix (SpacePossum)
+* minor #1538 Added possibility to lint tests (gharlan)
+* minor #1569 Add sample to get a specific version of the fixer (Soullivaneuh)
+* minor #1571 Enhance integration tests (keradus)
+* minor #1578 Code grooming (keradus)
+* minor #1583 Travis - update matrix (keradus)
+* minor #1585 Code grooming - Improve utests code coverage (SpacePossum)
+* minor #1586 Add configuration exception classes and exit codes (SpacePossum)
+* minor #1594 Fix invalid PHP code samples in utests  (SpacePossum)
+* minor #1597 MethodArgumentDefaultValueFixer - refactoring and fix closures with "use" clause (gharlan)
+* minor #1600 Added more integration tests (SpacePossum, keradus)
+* minor #1605 integration tests - swap EXPECT and INPUT (optional INPUT) (gharlan)
+* minor #1608 Travis - change matrix order for faster results (gharlan)
+* minor #1609 CONTRIBUTING.md - Don't rebase always on master (SpacePossum)
+* minor #1616 IncludeFixer - fix and test more cases (SpacePossum)
+* minor #1622 AbstractIntegratationTest - fix linting test cases (gharlan)
+* minor #1624 fix invalid code in test cases (gharlan)
+* minor #1625 Travis - switch to trusty (keradus)
+* minor #1627 FixCommand - fix output (keradus)
+* minor #1630 Pass along the exception code. (SpacePossum)
+* minor #1632 Php Inspections (EA Extended): SCA for 1.12 (kalessil)
+* minor #1633 Fix CS for project itself (keradus)
+* minor #1634 Backport some minor changes from 2.x line (keradus)
+* minor #1637 update PHP Coveralls (keradus)
+* minor #1639 Revert "Travis - set dist to trusty" (keradus)
+* minor #1641 AppVeyor/Travis - use GITHUB_OAUTH_TOKEN (keradus)
+* minor #1642 AppVeyor - install dev deps as well (keradus)
+* minor #1647 Deprecate non-default Configs and Finders (keradus)
+* minor #1654 Split output to stderr and stdout (SpacePossum)
+* minor #1660 update phpunit version (gharlan)
+* minor #1663 DuplicateSemicolonFixer - Remove duplicate semicolons even if there are comments between those (SpacePossum)
+* minor #1664 IncludeFixer - Add missing test case (SpacePossum)
+* minor #1668 Code grooming (keradus)
+* minor #1669 NativeFunctionCasingFixer - move to Symfony level (keradus)
+* minor #1670 Backport Finder and Config classes from 2.x line (keradus)
+* minor #1682 ElseifFixer - handle comments (SpacePossum)
+* minor #1689 AbstractIntegrationTest - no need for single-char group and docs grooming (keradus)
+* minor #1690 Integration tests - allow to not check priority, introduce IntegrationCase (keradus)
+* minor #1701 Fixer - Renamed import alias (GrahamCampbell)
+* minor #1708 Update composer.json requirements (keradus)
+* minor #1734 Travis: Turn on linting (keradus)
+* minor #1736 Integration tests - don't check priority for tests using short_tag fixer (keradus)
+* minor #1739 NoTrailingWhitespaceInCommentFixer - move to PSR2 level (keradus)
+* minor #1763 Deprecate ConfigInterface::getDir, ConfigInterface::setDir, Finder::setDir (keradus)
+* minor #1777 NoTrailingWhitespaceInCommentFixer - fix parent class (keradus)
+* minor #1816 PhpUnitDedicateAssertFixer - configuration is not required anymore (keradus)
+* minor #1849 DocBlock - The category tag should be together with package (GrahamCampbell)
+* minor #1870 Update README.rst (glensc)
+* minor #1880 FixCommand - fix stdErr detection (SpacePossum)
+* minor #1881 NoEmptyStatementFixer - handle anonymous classes correctly (gharlan)
+* minor #1906 .php_cs - use no_useless_else rule (keradus)
+* minor #1915 NoEmptyComment - move to Symfony level (SpacePossum)
+* minor #1917 BracesFixer - fixed comment handling (gharlan)
+* minor #1919 EmptyReturnFixer - move fixer outside of Symfony level (keradus)
+* minor #2036 OrderedUseFixer - adjust tests (keradus)
+* minor #2056 Travis - run nightly PHP (keradus)
+* minor #2061 UnusedUseFixer and LineAfterNamespace - add new integration test (keradus)
+* minor #2097 Add lambda tests for 7.0 and 7.1 (SpacePossum)
+* minor #2111 .travis.yml - rename PHP 7.1 env (keradus)
+* minor #2112 Fix 1.12 line (keradus)
+* minor #2118 SilencedDeprecationErrorFixer - adjust level (keradus)
+* minor #2132 composer.json - rename package name (keradus)
+* minor #2133 Apply ordered_class_elements rule (keradus)
+* minor #2138 composer.json - disallow to run on PHP 7.2+ (keradus)
+
+Changelog for v1.11.8
+---------------------
+
+* bug #2143 ReadmeCommand - fix running command on phar file (keradus)
+* minor #2129 Add .gitattributes to remove unneeded files (Slamdunk)
+* minor #2141 Move phar building to PHP 5.6 job as newest box.phar is no longer working on 5.3 (keradus)
+
+Changelog for v1.11.7
+---------------------
+
+* bug #2108 ShortArraySyntaxFixer, TernarySpacesFixer, UnalignEqualsFixer - fix priority bug (SpacePossum)
+* bug #2092 ConcatWithoutSpacesFixer, OperatorsSpacesFixer - fix too many spaces, fix incorrect fixing of lines with comments (SpacePossum)
+
+Changelog for v1.11.6
+---------------------
+
+* bug #2086 Braces - fix bug with comment in method prototype (keradus)
+* bug #2077 SingleLineAfterImportsFixer - Do not remove lines between use cases (SpacePossum)
+* bug #2079 TernarySpacesFixer - Remove multiple spaces (SpacePossum)
+* bug #2087 Fixer - handle PHP7 Errors as well (keradus)
+* bug #2072 LowercaseKeywordsFixer - handle CT_CLASS_CONSTANT (tgabi333)
+* bug #2066 LineAfterNamespaceFixer - Handle close tag (SpacePossum)
+* bug #2057 LineAfterNamespaceFixer - adding too much extra lines where namespace is last statement (keradus)
+* bug #2059 OperatorsSpacesFixer - handle declare statement (keradus)
+* bug #2060 UnusedUseFixer - fix handling whitespaces around removed import (keradus)
+* minor #2071 ShortEchoTagFixer - allow to run tests on PHP 5.3 (keradus)
+
+Changelog for v1.11.5
+---------------------
+
+* bug #2012 Properly build phar file for lowest supported PHP version (keradus)
+* bug #2037 BracesFixer - add support for anonymous classes (keradus)
+* bug #1989 Add support for PHP 7 namespaces (SpacePossum)
+* bug #2019 Fixing newlines added after curly brace string index access (jaydiablo)
+* bug #1840 [Bug] BracesFixer - Do add a line before close tag (SpacePossum)
+* bug #1994 EchoToPrintFixer - Fix T_OPEN_TAG_WITH_ECHO on hhvm (keradus)
+* bug #1970 Tokens - handle semi-reserved PHP 7 keywords (keradus)
+* minor #2017 PHP7 integration tests (keradus)
+* minor #1465 Bump supported HHVM version, improve ShortEchoTagFixer on HHVM (keradus)
+* minor #1995 Rely on own phpunit, not one from CI service (keradus)
+
+Changelog for v1.11.4
+---------------------
+
+* bug #1956 SelfUpdateCommand - don't update to non-stable version (keradus)
+* bug #1963 Fix not wanted unneeded_control_parentheses fixer for clone (Soullivaneuh)
+* bug #1960 Fix invalid test cases (keradus)
+* bug #1939 BracesFixer - fix handling comment around control token (keradus)
+* minor #1927 NewWithBracesFixer - remove invalid testcase (keradus)
+
+Changelog for v1.11.3
+---------------------
+
+* bug #1868 NewWithBracesFixer - fix handling more neighbor tokens (keradus)
+* bug #1893 BracesFixer - handle comments inside lambda function prototype (keradus)
+* bug #1806 SelfAccessorFixer - skip anonymous classes (gharlan)
+* bug #1813 BlanklineAfterOpenTagFixer, NoBlankLinesBeforeNamespaceFixer - fix priority (SpacePossum)
+* minor #1807 Tokens - simplify isLambda() (gharlan)
+
+Changelog for v1.11.2
+---------------------
+
+* bug #1776 EofEndingFixer - new line on end line comment is allowed (Slamdunk)
+* bug #1775 FileCacheManager - ignore corrupted serialized data (keradus)
+* bug #1769 FunctionDeclarationFixer - fix more cases (keradus)
+* bug #1747 Fixer - Fix ordering of fixer when both level and custom fixers are used (SpacePossum)
+* bug #1744 Fixer - fix rare situation when file was visited twice (keradus)
+* bug #1710 LowercaseConstantFixer - Fix comment cases. (SpacePossum)
+* bug #1711 FunctioncallSpaceFixer - do not touch function declarations. (SpacePossum)
+* minor #1798 LintManager - meaningful tempnam (Slamdunk)
+* minor #1759 UniqueFileIterator - performance improvement (GrahamCampbell)
+* minor #1745 appveyor - fix build (keradus)
+
+Changelog for v1.11.1
+---------------------
+
+* bug #1680 NewWithBracesFixer - End tags  (SpacePossum)
+* bug #1685 EmptyReturnFixer - Make independent of LowercaseConstantsFixer (SpacePossum)
+* bug #1640 IntegrationTest - fix directory separator (keradus)
+* bug #1595 ShortTagFixer - fix priority (keradus)
+* bug #1576 SpacesBeforeSemicolonFixer - do not remove space before semicolon if that space is after a semicolon (SpacePossum)
+* bug #1570 UnneededControlParenthesesFixer - fix test samples (keradus)
+* minor #1653 Update license year (gharlan)
+
+Changelog for v1.11
+-------------------
+
+* feature #1550 Added UnneededControlParenthesesFixer (Soullivaneuh, keradus)
+* feature #1532 Added ShortBoolCastFixer (SpacePossum)
+* feature #1523 Added EchoToPrintFixer and PrintToEchoFixer (Soullivaneuh)
+* feature #1552 Warn when running with xdebug extension (SpacePossum)
+* feature #1484 Added ArrayElementNoSpaceBeforeCommaFixer and ArrayElementWhiteSpaceAfterCommaFixer (amarczuk)
+* feature #1449 PhpUnitConstructFixer - Fix more use cases (SpacePossum)
+* feature #1382 Added PhpdocTypesFixer (GrahamCampbell)
+* feature #1384 Add intergration tests (SpacePossum)
+* feature #1349 Added FunctionTypehintSpaceFixer (keradus)
+* minor #1562 Fix invalid PHP code samples in utests (SpacePossum)
+* minor #1560 Fixed project name in xdebug warning (gharlan)
+* minor #1545 Fix invalid PHP code samples in utests (SpacePossum)
+* minor #1554 Alphabetically sort entries in .gitignore (GrahamCampbell)
+* minor #1527 Refactor the way types work on annotations (GrahamCampbell)
+* minor #1546 Update coding guide in cookbook (keradus)
+* minor #1526 Support more annotations when fixing types in phpdoc (GrahamCampbell)
+* minor #1535 clean ups (SpacePossum)
+* minor #1510 Added Symfony 3.0 support (Ener-Getick)
+* minor #1520 Code grooming (keradus)
+* minor #1515 Support property, property-read and property-write tags (GrahamCampbell)
+* minor #1488 Added more inline phpdoc tests (GrahamCampbell)
+* minor #1496 Add docblock to AbstractFixerTestBase::makeTest (lmanzke)
+* minor #1467 PhpdocShortDescriptionFixer - add support for Japanese sentence-ending characters (fritz-c)
+* minor #1453 remove calling array_keys in foreach loops (keradus)
+* minor #1448 Code grooming (keradus)
+* minor #1437 Added import fixers integration test (GrahamCampbell)
+* minor #1433 phpunit.xml.dist - disable gc (keradus)
+* minor #1427 Change arounded to surrounded in README.rst (36degrees)
+* minor #1420 AlignDoubleArrowFixer, AlignEqualsFixer - add integration tests (keradus)
+* minor #1423 appveyor.yml - do not cache C:\tools, its internal forAppVeyor (keradus)
+* minor #1400 appveyor.yml - add file (keradus)
+* minor #1396 AbstractPhpdocTypesFixer - instance method should be called on instance (keradus)
+* minor #1395 code grooming (keradus)
+* minor #1393 boost .travis.yml file (keradus)
+* minor #1372 Don't allow PHP 7 to fail (GrahamCampbell)
+* minor #1332 PhpUnitConstructFixer - fix more functions (keradus)
+* minor #1339 CONTRIBUTING.md - add link to PSR-5 (keradus)
+* minor #1346 Core grooming (SpacePossum)
+* minor #1328 Tokens: added typehint for Iterator elements (gharlan)
+
+Changelog for v1.10.3
+---------------------
+
+* bug #1559 WhitespacyLinesFixer - fix bug cases (SpacePossum, keradus)
+* bug #1541 Psr0Fixer - Ignore filenames that are a reserved keyword or predefined constant (SpacePossum)
+* bug #1537 Psr0Fixer - ignore file without name or with name started by digit (keradus)
+* bug #1516 FixCommand - fix wrong message for dry-run (SpacePossum)
+* bug #1486 ExtraEmptyLinesFixer - Remove extra lines after comment lines too (SpacePossum)
+* bug #1503 Psr0Fixer - fix case with comments lying around (GrahamCampbell)
+* bug #1474 PhpdocToCommentFixer - fix not properly fixing for block right after namespace (GrahamCampbell)
+* bug #1478 BracesFixer - do not remove empty lines after class opening (keradus)
+* bug #1468 Add missing ConfigInterface::getHideProgress() (Eugene Leonovich, rybakit)
+* bug #1466 Fix bad indent on align double arrow fixer (Soullivaneuh, keradus)
+* bug #1479 Tokens - fix detection of short array (keradus)
+
 Changelog for v1.10.2
 ---------------------
 

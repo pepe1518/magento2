@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Framework\Search\Test\Unit\Response;
@@ -10,7 +10,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 class QueryResponseTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @var \Magento\Framework\Search\Document[]
+     * @var \Magento\Framework\Api\Search\Document[]
      */
     private $documents = [];
 
@@ -29,7 +29,7 @@ class QueryResponseTest extends \PHPUnit_Framework_TestCase
         $helper = new ObjectManager($this);
 
         for ($count = 0; $count < 5; $count++) {
-            $document = $this->getMockBuilder('Magento\Framework\Search\Document')
+            $document = $this->getMockBuilder('Magento\Framework\Api\Search\Document')
                 ->disableOriginalConstructor()
                 ->getMock();
 

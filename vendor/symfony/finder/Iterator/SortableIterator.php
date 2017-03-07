@@ -41,7 +41,7 @@ class SortableIterator implements \IteratorAggregate
 
         if (self::SORT_BY_NAME === $sort) {
             $this->sort = function ($a, $b) {
-                return strcmp($a->getRealpath(), $b->getRealpath());
+                return strcmp($a->getRealpath() ?: $a->getPathname(), $b->getRealpath() ?: $b->getPathname());
             };
         } elseif (self::SORT_BY_TYPE === $sort) {
             $this->sort = function ($a, $b) {
@@ -51,19 +51,19 @@ class SortableIterator implements \IteratorAggregate
                     return 1;
                 }
 
-                return strcmp($a->getRealpath(), $b->getRealpath());
+                return strcmp($a->getRealpath() ?: $a->getPathname(), $b->getRealpath() ?: $b->getPathname());
             };
         } elseif (self::SORT_BY_ACCESSED_TIME === $sort) {
             $this->sort = function ($a, $b) {
-                return ($a->getATime() - $b->getATime());
+                return $a->getATime() - $b->getATime();
             };
         } elseif (self::SORT_BY_CHANGED_TIME === $sort) {
             $this->sort = function ($a, $b) {
-                return ($a->getCTime() - $b->getCTime());
+                return $a->getCTime() - $b->getCTime();
             };
         } elseif (self::SORT_BY_MODIFIED_TIME === $sort) {
             $this->sort = function ($a, $b) {
-                return ($a->getMTime() - $b->getMTime());
+                return $a->getMTime() - $b->getMTime();
             };
         } elseif (is_callable($sort)) {
             $this->sort = $sort;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -498,8 +498,7 @@ class Image extends \Magento\Framework\Model\AbstractModel
         $path = [
             $this->_catalogProductMediaConfig->getBaseMediaPath(),
             'cache',
-            $this->_storeManager->getStore()->getId(),
-            $path[] = $this->getDestinationSubdir(),
+            $this->getDestinationSubdir(),
         ];
         if (!empty($this->_width) || !empty($this->_height)) {
             $path[] = "{$this->_width}x{$this->_height}";

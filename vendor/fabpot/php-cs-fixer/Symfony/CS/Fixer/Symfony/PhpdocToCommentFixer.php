@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -49,21 +50,21 @@ class PhpdocToCommentFixer extends AbstractFixer
                 continue;
             }
 
-            if ($nextToken->isGivenkind($controlStructures) && $this->isValidControl($tokens, $token, $nextIndex)) {
+            if ($nextToken->isGivenKind($controlStructures) && $this->isValidControl($tokens, $token, $nextIndex)) {
                 continue;
             }
 
-            if ($nextToken->isGivenkind(T_VARIABLE) && $this->isValidVariable($tokens, $token, $nextIndex)) {
+            if ($nextToken->isGivenKind(T_VARIABLE) && $this->isValidVariable($tokens, $token, $nextIndex)) {
                 continue;
             }
 
-            if ($nextToken->isGivenkind(T_LIST) && $this->isValidList($tokens, $token, $nextIndex)) {
+            if ($nextToken->isGivenKind(T_LIST) && $this->isValidList($tokens, $token, $nextIndex)) {
                 continue;
             }
 
             // First docblock after open tag can be file-level docblock, so its left as is.
             $prevIndex = $tokens->getPrevMeaningfulToken($index);
-            if ($tokens[$prevIndex]->isGivenKind(T_OPEN_TAG)) {
+            if ($tokens[$prevIndex]->isGivenKind(array(T_OPEN_TAG, T_NAMESPACE))) {
                 continue;
             }
 
@@ -97,7 +98,7 @@ class PhpdocToCommentFixer extends AbstractFixer
     /**
      * Check if token is a structural element.
      *
-     * @see http://www.phpdoc.org/docs/latest/glossary.html#term-structural-elements
+     * @see https://github.com/phpDocumentor/fig-standards/blob/master/proposed/phpdoc.md#3-definitions
      *
      * @param Token $token
      *
@@ -109,6 +110,7 @@ class PhpdocToCommentFixer extends AbstractFixer
             T_PRIVATE,
             T_PROTECTED,
             T_PUBLIC,
+            T_VAR,
             T_FUNCTION,
             T_ABSTRACT,
             T_CONST,
@@ -143,7 +145,7 @@ class PhpdocToCommentFixer extends AbstractFixer
             $token = $tokens[$index];
 
             if (
-                $token->isGivenkind(T_VARIABLE) &&
+                $token->isGivenKind(T_VARIABLE) &&
                 false !== strpos($docsContent, $token->getContent())
             ) {
                 return true;
@@ -166,11 +168,7 @@ class PhpdocToCommentFixer extends AbstractFixer
     {
         $nextIndex = $tokens->getNextMeaningfulToken($variableIndex);
 
-        if (!$tokens[$nextIndex]->equals('=')) {
-            return false;
-        }
-
-        return false !== strpos($docsToken->getContent(), $tokens[$variableIndex]->getContent());
+        return $tokens[$nextIndex]->equals('=');
     }
 
     /**
@@ -191,7 +189,7 @@ class PhpdocToCommentFixer extends AbstractFixer
             $token = $tokens[$index];
 
             if (
-                $token->isGivenkind(T_VARIABLE)
+                $token->isGivenKind(T_VARIABLE)
                 && false !== strpos($docsContent, $token->getContent())
             ) {
                 return true;

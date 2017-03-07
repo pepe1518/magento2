@@ -1,4 +1,0 @@
-[2017-03-06 22:48:49] main.CRITICAL: 
-Compilation from source: 
-frontend/Magento/luma/en_US/css/styles-m.less
-Directory "/var/www/html/magento2/var/view_preprocessed/css/frontend/Magento/luma/en_US/Magento_CatalogEvent/css/source" cannot be created Warning!mkdir(): File exists [] []

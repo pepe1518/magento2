@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -14,7 +15,7 @@ namespace Symfony\CS\DocBlock;
 /**
  * This represents a tag, as defined by the proposed PSR PHPDoc standard.
  *
- * @author Graham Campbell <graham@mineuk.com>
+ * @author Graham Campbell <graham@alt-three.com>
  */
 class Tag
 {
@@ -26,8 +27,9 @@ class Tag
     private static $tags = array(
         'api', 'author', 'category', 'copyright', 'deprecated', 'example',
         'global', 'internal', 'license', 'link', 'method', 'package', 'param',
-        'property', 'return', 'see', 'since', 'struct', 'subpackage', 'throws',
-        'todo', 'typedef', 'uses', 'var', 'version',
+        'property', 'property-read', 'property-write', 'return', 'see',
+        'since', 'struct', 'subpackage', 'throws', 'todo', 'typedef', 'uses',
+        'var', 'version',
     );
 
     /**
@@ -45,7 +47,7 @@ class Tag
     public function __construct($content)
     {
         $this->name = 'other';
-        preg_match_all('/@[a-zA-Z0-9_]+(?=\s|$)/', $content, $matches);
+        preg_match_all('/@[a-zA-Z0-9_-]+(?=\s|$)/', $content, $matches);
 
         if (isset($matches[0][0])) {
             $this->name = ltrim($matches[0][0], '@');

@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Newsletter\Model;
@@ -442,6 +442,7 @@ class Subscriber extends \Magento\Framework\Model\AbstractModel
         $this->setStatusChanged(true);
 
         try {
+            $this->save();
             if ($isConfirmNeed === true
                 && $isOwnSubscribes === false
             ) {
@@ -449,7 +450,6 @@ class Subscriber extends \Magento\Framework\Model\AbstractModel
             } else {
                 $this->sendConfirmationSuccessEmail();
             }
-            $this->save();
             return $this->getStatus();
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());

@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -46,7 +47,7 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
                     return $content;
                 }
 
-                $namespaceIndex = $tokens->getNextNonWhitespace($index);
+                $namespaceIndex = $tokens->getNextMeaningfulToken($index);
                 $namespaceEndIndex = $tokens->getNextTokenOfKind($index, array(';'));
 
                 $namespace = trim($tokens->generatePartialCode($namespaceIndex, $namespaceEndIndex - 1));
@@ -55,7 +56,7 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
                     return $content;
                 }
 
-                $classyIndex = $tokens->getNextNonWhitespace($index);
+                $classyIndex = $tokens->getNextMeaningfulToken($index);
                 $classyName = $tokens[$classyIndex]->getContent();
             }
         }
@@ -65,8 +66,8 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
         }
 
         if (false !== $namespace) {
-            $normNamespace = strtr($namespace, '\\', '/');
-            $path = strtr($file->getRealPath(), '\\', '/');
+            $normNamespace = str_replace('\\', '/', $namespace);
+            $path = str_replace('\\', '/', $file->getRealPath());
             $dir = dirname($path);
 
             if ($this->config) {
@@ -95,7 +96,7 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
                 for ($i = $namespaceIndex; $i <= $namespaceEndIndex; ++$i) {
                     $tokens[$i]->clear();
                 }
-                $namespace = substr($namespace, 0, -strlen($dir)).strtr($dir, '/', '\\');
+                $namespace = substr($namespace, 0, -strlen($dir)).str_replace('/', '\\', $dir);
 
                 $newNamespace = Tokens::fromCode('<?php namespace '.$namespace.';');
                 $newNamespace[0]->clear();
@@ -105,12 +106,12 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
                 $tokens->insertAt($namespaceIndex, $newNamespace);
             }
         } else {
-            $normClass = strtr($classyName, '_', '/');
-            $path = strtr($file->getRealPath(), '\\', '/');
+            $normClass = str_replace('_', '/', $classyName);
+            $path = str_replace('\\', '/', $file->getRealPath());
             $filename = substr($path, -strlen($normClass) - 4, -4);
 
             if ($normClass !== $filename && strtolower($normClass) === strtolower($filename)) {
-                $tokens[$classyIndex]->setContent(strtr($filename, '/', '_'));
+                $tokens[$classyIndex]->setContent(str_replace('/', '_', $filename));
             }
         }
 
@@ -152,7 +153,26 @@ class Psr0Fixer extends AbstractFixer implements ConfigAwareInterface
 
         $filenameParts = explode('.', $file->getBasename(), 2);
 
-        if (!isset($filenameParts[1]) || 'php' !== $filenameParts[1]) {
+        if (
+            // ignore file with extension other than php
+            (!isset($filenameParts[1]) || 'php' !== $filenameParts[1])
+            // ignore file with name that cannot be a class name
+            || 0 === preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $filenameParts[0])
+            // ignore filename that will halt compiler (and cannot be properly tokenized under PHP 5.3)
+            || '__halt_compiler' === $filenameParts[0]
+        ) {
+            return false;
+        }
+
+        try {
+            $tokens = Tokens::fromCode(sprintf('<?php class %s {}', $filenameParts[0]));
+
+            if ($tokens[3]->isKeyword() || $tokens[3]->isMagicConstant()) {
+                // name can not be a class name - detected by PHP 5.x
+                return false;
+            }
+        } catch (\ParseError $e) {
+            // name can not be a class name - detected by PHP 7.x
             return false;
         }
 

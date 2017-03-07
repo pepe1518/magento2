@@ -17,6 +17,7 @@ use Composer\Json\JsonFile;
 use Composer\Util\ProcessExecutor;
 use Composer\Util\Filesystem;
 use Composer\IO\IOInterface;
+use Composer\Downloader\TransportException;
 
 /**
  * @author Per Bernhardt <plb@webfactory.de>
@@ -45,6 +46,10 @@ class HgDriver extends VcsDriver
 
             if (!is_writable(dirname($this->repoDir))) {
                 throw new \RuntimeException('Can not clone '.$this->url.' to access package information. The "'.$cacheDir.'" directory is not writable by the current user.');
+            }
+
+            if (preg_match('{^http:}i', $this->url) && $this->config->get('secure-http')) {
+                throw new TransportException("Your configuration does not allow connection to $url. See https://getcomposer.org/doc/06-config.md#secure-http for details.");
             }
 
             // update the repo if it is a valid hg repository

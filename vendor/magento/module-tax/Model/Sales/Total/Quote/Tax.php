@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Tax\Model\Sales\Total\Quote;
@@ -299,8 +299,11 @@ class Tax extends CommonTaxCollector
         $totals = [];
         $store = $quote->getStore();
         $applied = $total->getAppliedTaxes();
+        if (is_string($applied)) {
+            $applied = unserialize($applied);
+        }
         $amount = $total->getTaxAmount();
-        if ($amount == null) {
+        if ($amount === null) {
             $this->enhanceTotalData($quote, $total);
             $amount = $total->getTaxAmount();
         }
@@ -311,15 +314,13 @@ class Tax extends CommonTaxCollector
             $area = 'taxes';
         }
 
-        if ($amount != 0 || $this->_config->displayCartZeroTax($store)) {
-            $totals[] = [
-                'code' => $this->getCode(),
-                'title' => __('Tax'),
-                'full_info' => $applied ? $applied : [],
-                'value' => $amount,
-                'area' => $area,
-            ];
-        }
+        $totals[] = [
+            'code' => $this->getCode(),
+            'title' => __('Tax'),
+            'full_info' => $applied ? $applied : [],
+            'value' => $amount,
+            'area' => $area,
+        ];
 
         /**
          * Modify subtotal

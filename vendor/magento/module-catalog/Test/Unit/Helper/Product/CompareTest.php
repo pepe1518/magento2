@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -48,7 +48,7 @@ class CompareTest extends \PHPUnit_Framework_TestCase
      */
     protected $catalogSessionMock;
 
-    public function setUp()
+    protected function setUp()
     {
         $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
 
@@ -107,18 +107,13 @@ class CompareTest extends \PHPUnit_Framework_TestCase
         //Data
         $productId = 1;
         $removeUrl = 'catalog/product_compare/remove';
-        $compareListUrl = 'catalog/product_compare';
         $postParams = [
-            Action::PARAM_NAME_URL_ENCODED => strtr(base64_encode($compareListUrl), '+/=', '-_,'),
+            Action::PARAM_NAME_URL_ENCODED => '',
             'product' => $productId
         ];
 
         //Verification
-        $this->urlBuilder->expects($this->at(0))
-            ->method('getUrl')
-            ->with($compareListUrl)
-            ->will($this->returnValue($compareListUrl));
-        $this->urlBuilder->expects($this->at(1))
+        $this->urlBuilder->expects($this->once())
             ->method('getUrl')
             ->with($removeUrl)
             ->will($this->returnValue($removeUrl));
@@ -153,18 +148,12 @@ class CompareTest extends \PHPUnit_Framework_TestCase
     public function testGetPostDataClearList()
     {
         //Data
-        $refererUrl = 'home/';
         $clearUrl = 'catalog/product_compare/clear';
         $postParams = [
-            Action::PARAM_NAME_URL_ENCODED => strtr(base64_encode($refererUrl), '+/=', '-_,')
+            Action::PARAM_NAME_URL_ENCODED => ''
         ];
 
         //Verification
-        $this->request->expects($this->once())
-            ->method('getServer')
-            ->with('HTTP_REFERER')
-            ->will($this->returnValue($refererUrl));
-
         $this->urlBuilder->expects($this->once())
             ->method('getUrl')
             ->with($clearUrl)

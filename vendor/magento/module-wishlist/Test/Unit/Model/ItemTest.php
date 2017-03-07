@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 
@@ -68,7 +68,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
      */
     protected $model;
 
-    public function setUp()
+    protected function setUp()
     {
         $context = $this->getMockBuilder('Magento\Framework\Model\Context')
             ->disableOriginalConstructor()
@@ -319,6 +319,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             ->with([]);
         $this->productRepository->expects($this->once())
             ->method('getById')
+            ->with($productId, false, $storeId, true)
             ->willReturn($productMock);
         $this->assertEquals($productMock, $this->model->getProduct());
     }

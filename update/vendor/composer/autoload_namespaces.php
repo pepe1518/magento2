@@ -7,5 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Symfony\\Component\\Console\\' => array($vendorDir . '/symfony/console'),
-    'Composer' => array($vendorDir . '/composer/composer/src'),
+    'Psr\\Log\\' => array($vendorDir . '/psr/log'),
 );

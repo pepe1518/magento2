@@ -1,5 +1,5 @@
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 define(["prototype"], function(){
@@ -230,7 +230,7 @@ Packaging.prototype = {
 
     validate: function() {
         var dimensionElements = $("packaging_window").select(
-            'input[name=container_length],input[name=container_width],input[name=container_height]'
+            'input[name=container_length],input[name=container_width],input[name=container_height],input[name=container_girth]:not("._disabled")'
         );
         var callback = null;
         if ( dimensionElements.any(function(element) { return !!element.value; })) {
@@ -543,8 +543,7 @@ Packaging.prototype = {
             return;
         }
 
-        var girthEnabled = (packageSize[0].value == 'LARGE' && (packageContainer[0].value == 'NONRECTANGULAR'
-            || packageContainer[0].value == 'VARIABLE' ));
+        var girthEnabled = packageContainer[0].value == 'NONRECTANGULAR' || packageContainer[0].value == 'VARIABLE';
 
         if (!girthEnabled) {
             packageGirth[0].value='';
@@ -728,7 +727,7 @@ Packaging.prototype = {
                             item.remove();
                         } else if (qtyValue > packedQty) {
                             /* fix float number precision */
-                            qty.value = Number((qtyValue - packedQty).toFixed(4));
+                            qty.value = Number(Number(Math.round((qtyValue - packedQty) + "e+4") + "e-4").toFixed(4));
                         }
                     }
                 }
@@ -786,8 +785,8 @@ Packaging.prototype = {
             containerCustomsValue.value = parseFloat(containerCustomsValue.value) + itemCustomsValue * qtyValue;
             this.packages[packageId]['items'][itemId]['customs_value'] = itemCustomsValue;
         }.bind(this));
-        containerWeight.value = parseFloat(parseFloat(containerWeight.value).toFixed(4));
-        containerCustomsValue.value = parseFloat(containerCustomsValue.value).toFixed(2);
+        containerWeight.value = parseFloat(parseFloat(Math.round(containerWeight.value + "e+4") + "e-4").toFixed(4));
+        containerCustomsValue.value = parseFloat(Math.round(containerCustomsValue.value + "e+2") + "e-2").toFixed(2);
         if (containerCustomsValue.value == 0) {
             containerCustomsValue.value = '';
         }

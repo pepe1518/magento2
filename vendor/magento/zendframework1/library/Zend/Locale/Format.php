@@ -570,7 +570,7 @@ class Zend_Locale_Format
                         case '#':
                         case '-#':
                             if ($part[0] == '-') {
-                                $regex[$pkey] .= '[' . $symbols['minus'] . '-]{0,1}';
+                                $regex[$pkey] .= '[' . preg_quote($symbols['minus']) . '-]{0,1}';
                             } else {
                                 $regex[$pkey] .= '[' . $symbols['plus'] . '+]{0,1}';
                             }
@@ -614,7 +614,7 @@ class Zend_Locale_Format
                 if (($pattern == '#E0') || ($pattern == '#E00')) {
                     $regex[$pkey] .= '[' . $symbols['plus']. '+]{0,1}[0-9]{1,}(\\' . $symbols['decimal'] . '[0-9]{1,})*[eE][' . $symbols['plus']. '+]{0,1}[0-9]{1,}';
                 } else if (($pattern == '-#E0') || ($pattern == '-#E00')) {
-                    $regex[$pkey] .= '[' . $symbols['minus']. '-]{0,1}[0-9]{1,}(\\' . $symbols['decimal'] . '[0-9]{1,})*[eE][' . $symbols['minus']. '-]{0,1}[0-9]{1,}';
+                    $regex[$pkey] .= '[' .  preg_quote($symbols['minus']) . '-]{0,1}[0-9]{1,}(\\' . $symbols['decimal'] . '[0-9]{1,})*[eE][' .  preg_quote($symbols['minus']) . '-]{0,1}[0-9]{1,}';
                 } else {
                     throw new Zend_Locale_Exception('Unsupported token for numberformat (Pos 5):"' . $pattern . '"');
                 }
@@ -624,7 +624,7 @@ class Zend_Locale_Format
                 if ($end == '###') {
                     $regex[$pkey] .= '(\\' . $symbols['decimal'] . '{1}[0-9]{1,}){0,1}';
                 } else if ($end == '###-') {
-                    $regex[$pkey] .= '(\\' . $symbols['decimal'] . '{1}[0-9]{1,}){0,1}[' . $symbols['minus']. '-]';
+                    $regex[$pkey] .= '(\\' . $symbols['decimal'] . '{1}[0-9]{1,}){0,1}[' . preg_quote($symbols['minus']) . '-]';
                 } else {
                     throw new Zend_Locale_Exception('Unsupported token for numberformat (Pos 6):"' . $pattern . '"');
                 }

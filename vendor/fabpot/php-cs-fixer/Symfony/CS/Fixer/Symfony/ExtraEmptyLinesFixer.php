@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -12,6 +13,7 @@
 namespace Symfony\CS\Fixer\Symfony;
 
 use Symfony\CS\AbstractFixer;
+use Symfony\CS\Tokenizer\Token;
 use Symfony\CS\Tokenizer\Tokens;
 
 /**
@@ -25,10 +27,15 @@ class ExtraEmptyLinesFixer extends AbstractFixer
     public function fix(\SplFileInfo $file, $content)
     {
         $tokens = Tokens::fromCode($content);
-
-        foreach ($tokens->findGivenKind(T_WHITESPACE) as $token) {
+        /** @var Token $token */
+        foreach ($tokens->findGivenKind(T_WHITESPACE) as $index => $token) {
             $content = '';
             $count = 0;
+            if ($index > 0 && $tokens[$index - 1]->isComment()) {
+                $prevContent = $tokens[$index - 1]->getContent();
+                $count = strrpos($prevContent, "\n") === strlen($prevContent) - 1 ? 1 : 0;
+            }
+
             $parts = explode("\n", $token->getContent());
 
             for ($i = 0, $last = count($parts) - 1; $i <= $last; ++$i) {
@@ -36,7 +43,6 @@ class ExtraEmptyLinesFixer extends AbstractFixer
                     // if part is empty then we between two \n
                     ++$count;
                 } else {
-                    $count = 0;
                     $content .= $parts[$i];
                 }
 
@@ -64,7 +70,7 @@ class ExtraEmptyLinesFixer extends AbstractFixer
      */
     public function getPriority()
     {
-        // should be run after the UnusedUseFixer
+        // should be run after the UnusedUseFixer, DuplicateSemicolonFixer, NoEmptyPhpdocFixer, CombineConsecutiveUnsetsFixer and NoUselessElseFixer.
         return -20;
     }
 }

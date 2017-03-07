@@ -1,12 +1,13 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Setup\Console\Command;
 
 use Magento\Framework\Setup\ConsoleLogger;
 use Magento\Setup\Model\InstallerFactory;
+use Magento\Setup\Model\ObjectManagerProvider;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -32,8 +33,9 @@ class UpgradeCommand extends AbstractSetupCommand
      * Constructor
      *
      * @param InstallerFactory $installerFactory
+     * @param ObjectManagerProvider $objectManagerProvider
      */
-    public function __construct(InstallerFactory $installerFactory)
+    public function __construct(InstallerFactory $installerFactory, ObjectManagerProvider $objectManagerProvider)
     {
         $this->installerFactory = $installerFactory;
         parent::__construct();
@@ -49,7 +51,7 @@ class UpgradeCommand extends AbstractSetupCommand
                 self::INPUT_KEY_KEEP_GENERATED,
                 null,
                 InputOption::VALUE_NONE,
-                'Prevents generated code from being deleted. ' . PHP_EOL .
+                'Prevents generated files from being deleted. ' . PHP_EOL .
                 'We discourage using this option except when deploying to production. ' . PHP_EOL .
                 'Consult your system integrator or administrator for more information.'
             )
@@ -73,5 +75,7 @@ class UpgradeCommand extends AbstractSetupCommand
         if (!$keepGenerated) {
             $output->writeln('<info>Please re-run Magento compile command</info>');
         }
+
+        return \Magento\Framework\Console\Cli::RETURN_SUCCESS;
     }
 }

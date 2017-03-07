@@ -1,9 +1,10 @@
 <?php
 
 /*
- * This file is part of the PHP CS utility.
+ * This file is part of PHP CS Fixer.
  *
  * (c) Fabien Potencier <fabien@symfony.com>
+ *     Dariusz Rumiński <dariusz.ruminski@gmail.com>
  *
  * This source file is subject to the MIT license that is bundled
  * with this source code in the file LICENSE.
@@ -32,7 +33,7 @@ class WhitespacyLinesFixer extends AbstractFixer
             }
 
             $content = $token->getContent();
-            $lines = preg_split("/([\r\n]+)/", $content);
+            $lines = preg_split("/([\r\n])/", $content);
 
             if (
                 // fix T_WHITESPACES with at least 3 lines (eg `\n   \n`)
@@ -40,13 +41,21 @@ class WhitespacyLinesFixer extends AbstractFixer
                 // and T_WHITESPACES with at least 2 lines at the end of file
                 || (count($lines) > 1 && !isset($tokens[$index + 1]))
             ) {
-                $newContent = preg_replace('/^\h+$/m', '', $content);
-
-                if (isset($tokens[$index + 1])) {
-                    $newContent .= end($lines);
+                $lMax = count($lines) - 1;
+                if (!isset($tokens[$index + 1])) {
+                    ++$lMax;
                 }
 
-                $token->setContent($newContent);
+                $lStart = 1;
+                if (isset($tokens[$index - 1]) && $tokens[$index - 1]->isGivenKind(T_OPEN_TAG) && "\n" === substr($tokens[$index - 1]->getContent(), -1)) {
+                    $lStart = 0;
+                }
+
+                for ($l = $lStart; $l < $lMax; ++$l) {
+                    $lines[$l] = preg_replace('/^\h+$/', '', $lines[$l]);
+                }
+
+                $token->setContent(implode("\n", $lines));
             }
         }
 
@@ -59,5 +68,14 @@ class WhitespacyLinesFixer extends AbstractFixer
     public function getDescription()
     {
         return 'Remove trailing whitespace at the end of blank lines.';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPriority()
+    {
+        // should be run after the NoUselessReturnFixer, NoEmptyPhpdocFixer and NoUselessElseFixer.
+        return -19;
     }
 }

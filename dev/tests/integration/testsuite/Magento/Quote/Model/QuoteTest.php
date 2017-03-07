@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
 namespace Magento\Quote\Model;
@@ -26,8 +26,8 @@ class QuoteTest extends \PHPUnit_Framework_TestCase
         $quote = Bootstrap::getObjectManager()->create('Magento\Quote\Model\Quote');
         $quote->load('test01', 'reserved_order_id');
 
-        $product = Bootstrap::getObjectManager()->create('Magento\Catalog\Model\Product');
-        $product->load(21);
+        $productRepository = Bootstrap::getObjectManager()->create('Magento\Catalog\Api\ProductRepositoryInterface');
+        $product = $productRepository->get('virtual-product');
         $quote->addProduct($product);
         $quote->collectTotals();
 
@@ -97,10 +97,10 @@ class QuoteTest extends \PHPUnit_Framework_TestCase
         $quote->updateCustomerData($customerDataUpdated);
         $customer = $quote->getCustomer();
         $expected = $this->changeEmailInCustomerData('test@example.com', $expected);
-        ksort($expected);
         $actual = $this->convertToArray($customer);
-        ksort($actual);
-        $this->assertEquals($expected, $actual);
+        foreach ($expected as $item) {
+            $this->assertContains($item, $actual);
+        }
         $this->assertEquals('test@example.com', $quote->getCustomerEmail());
     }
 
@@ -288,9 +288,10 @@ class QuoteTest extends \PHPUnit_Framework_TestCase
         $quote->load('test01', 'reserved_order_id');
 
         $productStockQty = 100;
-        /** @var \Magento\Catalog\Model\Product $product */
-        $product = Bootstrap::getObjectManager()->create('Magento\Catalog\Model\Product');
-        $product->load(2);
+
+        $productRepository = Bootstrap::getObjectManager()->create('Magento\Catalog\Api\ProductRepositoryInterface');
+        $product = $productRepository->get('simple-1');
+
         $quote->addProduct($product, 50);
         $quote->setTotalsCollectedFlag(false)->collectTotals();
         $this->assertEquals(50, $quote->getItemsQty());
