@@ -82,7 +82,6 @@ class Date implements \Magento\Framework\Data\Form\Filter\FilterInterface
         );
 
         $value = $filterInput->filter($value);
-        $value = $filterInternal->filter($value);
         return $value;
     }
 }
